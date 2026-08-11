@@ -179,14 +179,8 @@ export default function LiveThreatIntelligence() {
       }));
   }, [events]);
 
-<<<<<<< HEAD
   const topMalwareMax = Math.max(...topMalware.map(t => t.count), 1);
 
-  const isOffline = (threatFoxData && !threatFoxData.success) && (urlhausData && !urlhausData.success);
-  const lastUpdatedStr = tfUpdatedAt || uhUpdatedAt
-    ? `Last updated: ${formatDistanceToNow(Math.max(tfUpdatedAt || 0, uhUpdatedAt || 0), { addSuffix: true })}`
-    : 'AWAITING STREAM';
-=======
   const filteredEvents = useMemo(() => {
     let result = events;
     if (malwareFilter) {
@@ -216,7 +210,6 @@ export default function LiveThreatIntelligence() {
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const lastUpdatedStr = dataUpdatedAt ? `Last updated: ${formatDistanceToNow(dataUpdatedAt, { addSuffix: true })}` : 'AWAITING STREAM';
->>>>>>> origin/dev
 
   return (
     <div className="animate-in" style={{ paddingBottom: '2rem' }}>
