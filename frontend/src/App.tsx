@@ -26,10 +26,11 @@ import NewCase from '@/pages/cases/NewCase';
 import EvidenceUpload from '@/pages/evidence/EvidenceUpload';
 import EvidenceDetail from '@/pages/evidence/EvidenceDetail';
 
-// OSINT module
+// OSINT & Threat Intel
 import OsintDashboard from '@/pages/osint/OsintDashboard';
-// Threat Intelligence module
 import LiveThreatIntelligence from '@/pages/threat/LiveThreatIntelligence';
+import ThreatInvestigate from '@/pages/threat/ThreatInvestigate';
+
 // Findings module (fully implemented)
 import FindingsList from '@/pages/findings/FindingsList';
 import FindingDetail from '@/pages/findings/FindingDetail';
@@ -89,6 +90,7 @@ function App() {
                 {/* OSINT & Threat Intel */}
                 <Route path="/osint" element={<OsintDashboard />} />
                 <Route path="/threat-intelligence" element={<LiveThreatIntelligence />} />
+                <Route path="/threat-intelligence/investigate" element={<ThreatInvestigate />} />
 
                 {/* Findings */}
                 <Route path="/findings" element={<FindingsList />} />
