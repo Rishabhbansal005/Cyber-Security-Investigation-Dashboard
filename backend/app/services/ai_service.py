@@ -13,6 +13,7 @@ import httpx
 import logging
 import asyncio
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -78,43 +79,100 @@ def get_live_dashboard_context(case_id: Optional[str] = None) -> str:
 
 def is_cyber_investigation_query(question: str) -> bool:
     """
-    Check whether a query is strictly related to CCID dashboard, digital forensics,
-    cybercrime investigation, evidence, legal procedures, or threat intelligence.
+    Check whether a query is related to CCID, cybersecurity, digital forensics,
+    cybercrime, cyber law, incident response, or the dashboard.
+    Very permissive — only blocks clearly off-topic general knowledge.
     """
     q = question.lower().strip()
-    
-    # 1. Immediate rejection for explicit off-topic general knowledge queries
+
+    # 1. Immediate rejection for explicit off-topic general knowledge
     offtopic_triggers = [
-        "president of", "prime minister of", "capital of", "who is the king", "who is the queen",
         "tell me a joke", "recipe for", "how to cook", "movie recommendation", "sports score",
-        "weather in", "sing a song", "write a story about", "who won the", "population of",
-        "capital city", "currency of", "translate to spanish", "translate to french", "who is the president"
+        "sing a song", "write a poem", "who won the world cup", "cricket score",
+        "translate to spanish", "translate to french", "best restaurant", "stock price of",
+        "box office", "horoscope", "astrology"
     ]
     for trigger in offtopic_triggers:
         if trigger in q:
             return False
 
-    # 2. Allow if contains any cybercrime/forensic/dashboard keywords
+    # 2. Allow if contains any cybercrime / forensic / law / dashboard keyword
     cyber_keywords = [
-        "case", "cases", "evidence", "dashboard", "finding", "findings", "correlation", "correlations",
-        "suspect", "suspects", "timeline", "report", "reports", "stat", "stats", "count", "metrics",
-        "investigation", "investigate", "forensic", "forensics", "cyber", "crime", "hack", "hacker",
-        "hacking", "attack", "malware", "phishing", "botnet", "c2", "ip", "domain", "hash", "md5",
-        "sha256", "pcap", "network", "packet", "traffic", "ram", "memory", "volatility", "autopsy",
-        "wireshark", "log", "logs", "registry", "disk", "image", "acquisition", "custody", "chain",
-        "seizure", "device", "mobile", "phone", "vault", "otx", "osint", "threat", "vulnerability",
-        "port", "scan", "firewall", "siem", "fir", "65b", "it act", "legal", "warrant", "bns", "bnss",
-        "police", "officer", "agent", "triage", "breach", "exfiltration", "ransomware", "trojan",
-        "backdoor", "exploit", "indicator", "overview", "active", "open", "closed", "critical",
-        "high", "medium", "low", "help", "hi", "hello", "hey", "what can you do", "who are you",
-        "fraud", "scam", "chori", "paisa", "bank", "account", "kya karu", "kaise", "help me",
-        "whatsapp", "instagram", "facebook", "twitter", "social media", "telegram", "snapchat",
-        "file", "link", "message", "sms", "otp", "password", "login", "profile", "unknown", "unkown",
-        "fake", "spam", "stolen", "lost", "tracker", "location", "virus", "antivirus", "awareness",
-        "safety", "secure", "protect", "privacy", "data", "leak", "dark web", "deep web",
-        "internet", "online", "wifi", "bluetooth", "usb", "drive", "email", "gmail", "phish"
+        # CCID & Dashboard
+        "ccid", "cyber crime investigation", "case", "cases", "evidence", "dashboard",
+        "finding", "findings", "correlation", "suspect", "suspects", "timeline",
+        "report", "reports", "stat", "count", "metrics", "triage", "overview",
+        "active", "open", "closed", "critical", "high", "medium", "low",
+        # Greetings / general help
+        "help", "hi", "hello", "hey", "who are you", "what can you do", "what is ccid",
+        "about ccid", "tell me about", "explain", "what is", "how does", "what are",
+        "definition", "meaning of", "types of",
+        # Cybersecurity & Attacks
+        "cyber", "cybersecurity", "cyber security", "hacker", "hacking", "hack",
+        "attack", "malware", "phishing", "spear phishing", "vishing", "smishing",
+        "ransomware", "trojan", "worm", "virus", "spyware", "adware", "rootkit",
+        "botnet", "c2", "command and control", "ddos", "dos", "sql injection", "xss",
+        "cross site", "zero day", "exploit", "vulnerability", "cve", "cvss", "backdoor",
+        "keylogger", "brute force", "credential stuffing", "man in the middle", "mitm",
+        "arp spoofing", "dns poisoning", "session hijacking", "clickjacking", "drive by",
+        "supply chain attack", "watering hole", "apt", "advanced persistent threat",
+        "lateral movement", "privilege escalation", "data exfiltration", "c&c",
+        "cryptojacking", "fileless malware", "polymorphic", "obfuscation",
+        # Forensics & Tools
+        "forensic", "forensics", "dfir", "digital forensics", "incident response",
+        "volatility", "autopsy", "wireshark", "ftk", "encase", "cellebrite", "axiom",
+        "pcap", "packet", "traffic", "network forensics", "memory forensics", "disk forensics",
+        "mobile forensics", "cloud forensics", "log analysis", "siem", "splunk", "elk",
+        "hash", "md5", "sha1", "sha256", "chain of custody", "bit by bit", "acquisition",
+        "write blocker", "faraday", "registry", "artifact", "prefetch", "lnk file",
+        "browser history", "recycle bin", "mft", "ntfs", "exif", "steganography",
+        "ram", "memory", "process", "pid", "pslist", "netscan", "malfind",
+        "osint", "otx", "shodan", "socmint", "geoint", "whois", "ip", "domain",
+        "threat intel", "threat intelligence", "ioc", "indicator", "ttps", "mitre att&ck",
+        # Cyber Crime Categories
+        "fraud", "scam", "financial fraud", "upi fraud", "bank fraud", "credit card fraud",
+        "debit card fraud", "emi fraud", "loan fraud", "investment fraud", "ponzi",
+        "phishing email", "fake website", "identity theft", "impersonation",
+        "sextortion", "blackmail", "extortion", "cyberbullying", "cyber harassment",
+        "stalking", "cyberstalking", "revenge porn", "non consensual", "morphed image",
+        "child pornography", "csam", "grooming", "online predator",
+        "dark web", "deep web", "tor", "cryptocurrency fraud", "bitcoin scam",
+        "nft fraud", "job fraud", "fake job", "matrimonial fraud", "romance scam",
+        "otp fraud", "sim swap", "sim cloning", "account takeover", "phishing link",
+        "fake call", "vishing", "tech support scam", "lottery scam", "prize scam",
+        "data breach", "leak", "dark web sale", "ransomware attack", "data held hostage",
+        # Indian Cyber Law
+        "it act", "it act 2000", "information technology act", "section 43", "section 66",
+        "section 66a", "section 66b", "section 66c", "section 66d", "section 66e",
+        "section 66f", "section 67", "section 67a", "section 67b", "section 69",
+        "section 70", "section 72", "section 72a", "section 74", "section 75",
+        "bns", "bnss", "bsa", "bharatiya nyaya sanhita", "bharatiya nagarik suraksha",
+        "bharatiya sakshya", "ipc", "crpc", "indian penal code",
+        "section 354d", "section 499", "section 500", "section 507", "section 509",
+        "section 420", "section 468", "fir", "charge sheet", "cognizable", "non cognizable",
+        "cyber law", "cyber laws", "legal", "warrant", "court order", "digital evidence",
+        "electronic evidence", "admissibility", "section 65b", "65b certificate",
+        "gdpr", "budapest convention", "mlat", "interpol", "cert-in", "cert in",
+        "nccrp", "cybercrime.gov.in", "1930", "cyber helpline", "national cybercrime",
+        "privacy law", "pdpb", "pdp bill", "data protection", "right to privacy",
+        "adjudicating officer", "cyber appellate tribunal", "cat", "computer emergency",
+        # Devices & Infrastructure
+        "phone", "mobile", "smartphone", "laptop", "computer", "server", "router",
+        "firewall", "ids", "ips", "vpn", "proxy", "tor network", "onion",
+        "usb", "drive", "pendrive", "hard disk", "ssd", "cloud", "aws", "azure",
+        "wifi", "bluetooth", "iot", "smart device", "cctv", "surveillance",
+        # Social Media & Communication
+        "whatsapp", "instagram", "facebook", "twitter", "telegram", "snapchat",
+        "youtube", "linkedin", "tiktok", "signal", "email", "gmail", "otp",
+        "password", "login", "account", "profile", "fake profile", "fake account",
+        "social media", "message", "sms", "link", "url", "qr code",
+        # General Safety
+        "safety", "secure", "protect", "privacy", "awareness", "prevention",
+        "stolen", "lost", "recovered", "blocked", "reported", "complaint",
+        "chori", "paisa", "bank", "kya karu", "kaise", "help me", "mere saath",
+        "mera phone", "mera account", "fake", "spam", "unknown"
     ]
-    
+
     return any(kw in q for kw in cyber_keywords)
 
 class AIService:
@@ -356,17 +414,15 @@ class AIService:
         dashboard_telemetry = get_live_dashboard_context(case_id)
 
         system_prompt = (
-            "You are CCID Cyber Copilot, an elite AI Cyber Security, Incident Response, and Digital Forensics Expert.\n"
-            "Your role is two-fold:\n"
-            "1. Cyber Security Guidance (Incident Response & Awareness): Provide step-by-step, actionable, and easy-to-understand guidance for ALL types of cyber security issues, digital cyber attacks, cyber hacking, and cyber awareness (e.g., 'my phone got hacked', 'someone sent an unknown file on WhatsApp', 'ransomware attack', 'financial fraud'). ALWAYS reply in English, even if the user asks their question in another language. Guide them exactly on what steps they should take immediately to secure themselves or stay safe online.\n"
-            "2. Dashboard Analysis: Answer questions about the user's Cyber Crime Investigation Dashboard (CCID), active cases, evidence items, suspects, and system metrics based on the provided telemetry.\n\n"
-            "STRICT OPERATIONAL RULES:\n"
-            "1. ALWAYS prioritize being helpful for cyber incidents. Provide clear, numbered, prioritized steps (e.g., 1. Disconnect Internet, 2. Change Passwords, 3. Report to Cyber Police at 1930 or cybercrime.gov.in).\n"
-            "2. Be conversational and empathetic when users report an incident. Reassure them and give actionable advice.\n"
-            "3. Ground any dashboard-related answers directly in the live CCID Dashboard Telemetry provided below.\n"
-            "4. Maintain context across the conversation history.\n"
-            "5. OFF-TOPIC REJECTION RULE: If the user asks non-security, off-topic questions completely unrelated to cyber security, incident response, digital forensics, or the CCID dashboard "
-            "(e.g. general trivia, movies, recipes), REFUSE politely.\n\n"
+            "You are CCID Cyber Copilot — an elite, highly trained AI assistant embedded inside the Cyber Crime Investigation Department (CCID) platform.\n"
+            "Answer every question with authority, clarity, and structured formatting.\n\n"
+            "## Core Mandate\n"
+            "• You operate under the Ministry of Home Affairs (MHA) and specialize in digital evidence, forensic analysis, OSINT, and cyber crime prosecution.\n"
+            "• For cyber incidents, immediately advise calling 1930 and reporting at cybercrime.gov.in.\n"
+            "• When asked about laws, cite exact sections from Indian IT Act 2000, BNS 2023, or BNSS 2023 if applicable.\n"
+            "• Use ONLY the live telemetry data provided below for dashboard questions. Never fabricate case numbers.\n"
+            "• Format responses with markdown — use headers, bullet points, bold for key terms, and numbered lists.\n"
+            "• Always reply in English regardless of the user's language.\n\n"
             f"{dashboard_telemetry}"
         )
 
@@ -450,65 +506,241 @@ class AIService:
         }
 
     def _fallback_cyber_copilot(self, question: str, context: Optional[str], telemetry: str, err_msg: str) -> Dict[str, Any]:
+        """Comprehensive rule-based fallback engine with full cyber law, crime, and CCID knowledge."""
         q_lower = question.lower()
-        
-        # Check off-topic
-        non_forensic_keywords = ["recipe", "movie", "song", "weather", "game", "joke", "sports", "cook", "tell me a story"]
+
+        # Off-topic rejection
+        non_forensic_keywords = ["recipe", "how to cook", "movie review", "sports score", "tell me a joke", "cricket score", "best restaurant"]
         if any(kw in q_lower for kw in non_forensic_keywords):
-            answer = "I am CCID Cyber Copilot. I specialize in Cyber Security, Digital Forensics, and Incident Response. I can guide you if you have faced a cyber attack, phone hack, or financial fraud. Please ask a question related to cyber security or dashboard metrics."
             return {
                 "success": True,
-                "answer": answer,
+                "answer": "I am **CCID Cyber Copilot** — your expert in Cyber Security, Digital Forensics, Cyber Law, and Incident Response. I cannot help with that topic. Please ask about cyber crimes, cyber laws, how to stay safe online, or the CCID investigation dashboard.",
                 "status": "success_fallback",
                 "provider_used": "ccid-expert-copilot-engine"
             }
 
-        if "case" in q_lower or "dashboard" in q_lower or "count" in q_lower or "stat" in q_lower or "how many" in q_lower:
+        # ── Indian Cyber Law queries ─────────────────────────────────────────
+        if any(kw in q_lower for kw in ["it act", "section 66", "section 67", "section 43", "section 65b", "section 69", "section 70", "section 72", "bns", "bnss", "bsa", "bharatiya", "cyber law", "legal", "punishment", "penalty", "sentence", "offence", "ipc", "crpc", "fir", "budapest", "gdpr", "mlat", "pocso", "dpdp", "adjudicating"]):
             topic_guide = (
-                f"### [DASHBOARD] CCID Live System Telemetry Summary\n"
+                "## ⚖️ Indian Cyber Law Quick Reference\n\n"
+                "### 🔹 IT Act 2000 (amended 2008) — Key Sections\n"
+                "| Section | Offence | Punishment |\n"
+                "|---------|---------|-----------|\n"
+                "| **43** | Unauthorised access / damage to computer | Civil — Compensation up to ₹1 Crore |\n"
+                "| **65** | Tampering with computer source code | 3 years + fine |\n"
+                "| **66** | Hacking / Unauthorised access (criminal) | 3 years + ₹5 lakh fine |\n"
+                "| **66B** | Receiving stolen computer resources | 3 years + ₹1 lakh |\n"
+                "| **66C** | Identity theft | 3 years + ₹1 lakh |\n"
+                "| **66D** | Cheating by personation online | 3 years + ₹1 lakh |\n"
+                "| **66E** | Violation of privacy (private images) | 3 years + ₹2 lakh |\n"
+                "| **66F** | Cyber terrorism | Life imprisonment |\n"
+                "| **67** | Publishing obscene material online | 3 yrs + ₹5L (1st), 5 yrs + ₹10L (repeat) |\n"
+                "| **67A** | Sexually explicit material | 5 years + ₹10 lakh |\n"
+                "| **67B** | Child pornography (CSAM) | 5 yrs + ₹10L (1st), 7 yrs (repeat) |\n"
+                "| **69** | Government interception/monitoring orders | N/A (powers only) |\n"
+                "| **69A** | Blocking public access to websites | N/A (powers only) |\n"
+                "| **70** | Unauthorised access to protected systems | 10 years imprisonment |\n"
+                "| **72** | Breach of confidentiality by intermediaries | 2 years + ₹1 lakh |\n"
+                "| **72A** | Disclosure in breach of lawful contract | 3 years + ₹5 lakh |\n"
+                "| **75** | Extra-territorial jurisdiction | Applies if Indian computer involved |\n\n"
+                "### 🔹 Digital Evidence Admissibility\n"
+                "- **Section 65B Certificate** (Indian Evidence Act / Bharatiya Sakshya Adhiniyam Section 63) is **mandatory** for electronic evidence to be admissible in court.\n"
+                "- Key SC ruling: **Anvar P.V. v. P.K. Basheer (2014)** — electronic records without 65B certificate are inadmissible.\n\n"
+                "### 🔹 Bharatiya Nyaya Sanhita (BNS) 2023\n"
+                "- Section 78: Stalking (including cyberstalking)\n"
+                "- Section 79: Voyeurism\n"
+                "- Section 318: Cheating (replaces IPC 420)\n"
+                "- Section 336: Forgery of electronic documents\n"
+                "- Section 351: Criminal intimidation (online threats)\n\n"
+                "### 🔹 International Laws\n"
+                "- **Budapest Convention (2001)**: First international cybercrime treaty. Covers: unauthorised access, data interference, computer fraud, CSAM, copyright violations.\n"
+                "- **GDPR (EU)**: Fines up to €20M or 4% of global annual turnover for data breaches affecting EU citizens.\n"
+                "- **DPDPA 2023 (India)**: India's data protection law — maximum penalty ₹250 crore.\n"
+                "- **MLAT**: India has mutual legal assistance treaties with 40+ countries for cross-border evidence collection.\n"
+            )
+
+        # ── Financial Fraud queries ──────────────────────────────────────────
+        elif any(kw in q_lower for kw in ["fraud", "scam", "upi", "bank", "otp", "account", "money", "stolen", "debit", "credit", "paisa", "paise", "transfer", "transaction", "atm", "sim swap", "investment", "crypto", "bitcoin", "trading"]):
+            topic_guide = (
+                "## 🚨 IMMEDIATE STEPS — Financial Cyber Fraud\n\n"
+                "**If money has been stolen from your account:**\n"
+                "1. 📞 **Call 1930** (National Cyber Crime Helpline) immediately — the faster you report, the better the chance of fund freeze.\n"
+                "2. 🌐 **File complaint** at **cybercrime.gov.in** → Financial Frauds section.\n"
+                "3. 🏦 **Call your bank** and request an emergency **17-digit transaction reference number** to freeze the fraudulent transaction.\n"
+                "4. 📋 **File an FIR** at your nearest police station or cyber crime cell under **Section 66C, 66D IT Act + Section 318 BNS (Cheating)**.\n"
+                "5. 📱 If OTP was stolen — **block your SIM** immediately (call 198) to prevent further access.\n\n"
+                "**Common Financial Cyber Frauds:**\n"
+                "- **UPI Fraud**: Fraudster sends fake payment request; victim enters UPI PIN → money debited.\n"
+                "- **SIM Swap Fraud**: Fraudster gets your SIM re-issued via telecom operator; hijacks OTPs.\n"
+                "- **Investment/Ponzi Scam**: Promises 20-30% monthly returns; disappears with funds.\n"
+                "- **Courier/Customs Scam**: Fake FedEx/customs officer claims contraband parcel; demands 'digital arrest' payment.\n"
+                "- **Loan App Fraud**: Illegal apps charge hidden fees; threaten contacts with morphed images.\n"
+                "- **Pig Butchering Scam**: Romance + fake trading app; builds trust over weeks then steals large sum.\n\n"
+                "**Legal Provisions:** IT Act Sections 66C, 66D | BNS Section 318 (Cheating) | Section 420 IPC (old)"
+            )
+
+        # ── Hacking & Device compromise ──────────────────────────────────────
+        elif any(kw in q_lower for kw in ["hack", "hacked", "phone", "mobile", "device", "access", "remote", "spyware", "rat", "stalkerware", "pegasus", "keylogger", "malware", "virus", "ransomware", "trojan"]):
+            topic_guide = (
+                "## 🛡️ Incident Response — Device Hacked / Malware Detected\n\n"
+                "**Immediate Actions:**\n"
+                "1. ✈️ **Put device in Airplane Mode** — cuts all network access to prevent data exfiltration.\n"
+                "2. 🔌 **Do NOT restart/factory reset** — preserves forensic evidence in volatile memory.\n"
+                "3. 📸 **Document everything** — screenshot suspicious apps, messages, unknown accounts.\n"
+                "4. 🔐 **Change all passwords** from a DIFFERENT, clean device — email, banking, social media.\n"
+                "5. 🔑 **Enable 2FA** on all accounts (use Authenticator app, NOT SMS-based 2FA if SIM is compromised).\n"
+                "6. 🏛️ **Report to CCID/Cyber Police** — bring the device for forensic imaging.\n\n"
+                "**Signs Your Device Is Hacked:**\n"
+                "- Unusual data usage, battery drain, overheating\n"
+                "- Unknown apps installed, strange outgoing calls/messages\n"
+                "- Camera/mic activating without your action\n"
+                "- Accounts logged in from unknown locations\n"
+                "- Receiving OTPs you didn't request (sign of account takeover attempt)\n\n"
+                "**Forensic Process (for Officers):**\n"
+                "1. Acquire bit-by-bit image with FTK Imager / dd (write-blocker mandatory)\n"
+                "2. Hash verify with SHA-256 before analysis\n"
+                "3. Analyse with Autopsy (disk), Volatility 3 (memory), Wireshark (network)\n"
+                "4. Extract IOCs — suspicious IPs, domains, file hashes\n"
+                "5. Cross-reference with AlienVault OTX / VirusTotal\n"
+            )
+
+        # ── Social media / online harassment / sextortion ────────────────────
+        elif any(kw in q_lower for kw in ["sextortion", "blackmail", "extortion", "threat", "harassment", "bully", "stalking", "fake profile", "fake account", "morphed", "photo", "image", "revenge", "intimate", "private video", "whatsapp", "instagram", "facebook", "social media"]):
+            topic_guide = (
+                "## 🆘 Online Harassment / Sextortion Response\n\n"
+                "**Do NOT panic. Do NOT pay.** Paying encourages further demands.\n\n"
+                "**Immediate Steps:**\n"
+                "1. 🚫 **Block the perpetrator** on all platforms immediately.\n"
+                "2. 📸 **Preserve evidence** — screenshot all threats, messages, profile URLs before blocking.\n"
+                "3. 🌐 **Report at cybercrime.gov.in** → Women/Child Safety section (for sextortion/revenge porn).\n"
+                "4. 📞 **Call 1930** or visit nearest Cyber Crime Police Station.\n"
+                "5. 📱 **Report to the platform** — Facebook, Instagram, WhatsApp all have mechanisms to take down NCII (Non-Consensual Intimate Images).\n"
+                "6. 🔒 **Secure all accounts** — change passwords, enable 2FA, check active sessions.\n\n"
+                "**Applicable Laws:**\n"
+                "- **Section 66E IT Act**: Violation of privacy (capturing/publishing private images) — 3 years + ₹2 lakh\n"
+                "- **Section 67/67A IT Act**: Publishing obscene/sexually explicit material — 5 years\n"
+                "- **Section 354C IPC / Section 79 BNS**: Voyeurism\n"
+                "- **Section 354D IPC / Section 78 BNS**: Stalking/Cyberstalking\n"
+                "- **Section 507 IPC / Section 351(3) BNS**: Criminal intimidation by anonymous communication\n"
+                "- **Section 499/500 IPC / Section 356 BNS**: Defamation\n\n"
+                "**National Helplines:**\n"
+                "- Women Helpline: 181 | Cyber Crime: 1930 | Child Helpline: 1098"
+            )
+
+        # ── CCID About / What is CCID ────────────────────────────────────────
+        elif any(kw in q_lower for kw in ["what is ccid", "about ccid", "ccid", "who are you", "what can you do", "what do you know", "features", "tools", "capabilities"]):
+            topic_guide = (
+                "## 🏛️ About CCID — Cyber Crime Investigation Department\n\n"
+                "**CCID** is a specialised law enforcement intelligence platform for investigating cyber crimes in India.\n\n"
+                "### Platform Capabilities:\n"
+                "| Module | Function |\n"
+                "|--------|----------|\n"
+                "| **Case Management** | Create, track, and manage cyber crime cases |\n"
+                "| **Evidence Vault** | Secure digital evidence storage with SHA-256 chain of custody |\n"
+                "| **OSINT Tools** | CVE lookup, IP Geolocation, WHOIS, Shodan, Nmap, Domain Reputation, SOCMINT |\n"
+                "| **Memory Analysis** | Volatility 3 — process analysis, malware detection |\n"
+                "| **Network Forensics** | PCAP/Wireshark analysis, CDR analysis |\n"
+                "| **Financial Analysis** | Transaction tracing, cryptocurrency tracking |\n"
+                "| **Image Forensics** | EXIF extraction, steganography detection |\n"
+                "| **Suspect Management** | Suspect profiles and cross-case correlations |\n"
+                "| **AI Threat Briefings** | AI-powered OSINT analysis reports |\n"
+                "| **Cyber Threat Map** | Live Delhi NCR cybercrime heatmap |\n"
+                "| **Report Generation** | FIR-ready PDF/PPT forensic reports |\n"
+                "| **Cyber Copilot (Me)** | AI assistant for cyber guidance, law, and investigation support |\n\n"
+                "### I can help you with:\n"
+                "✅ Cyber security incident response guidance\n"
+                "✅ Indian cyber law (IT Act, BNS, BNSS, POCSO, DPDPA)\n"
+                "✅ International cyber law (GDPR, Budapest Convention)\n"
+                "✅ Cyber crime categories and investigation techniques\n"
+                "✅ Digital forensics tools and procedures\n"
+                "✅ CCID dashboard analysis and case metrics\n"
+                "✅ Financial fraud, hacking, stalking, sextortion guidance\n"
+            )
+
+        # ── Memory / RAM / Volatility ────────────────────────────────────────
+        elif any(kw in q_lower for kw in ["memory", "ram", "volatil", "pslist", "netscan", "malfind", "dump", "process"]):
+            topic_guide = (
+                "## 🧠 Memory Forensics — Live Acquisition & Analysis\n\n"
+                "**Step 1 — Capture RAM (BEFORE powering off):**\n"
+                "```bash\n"
+                "# Windows\n"
+                "winpmem_mini.exe mem.raw\n"
+                "# Linux\n"
+                "insmod lime.ko 'path=/tmp/mem.lime format=lime'\n"
+                "```\n\n"
+                "**Step 2 — Analyse with Volatility 3:**\n"
+                "```bash\n"
+                "volatility3 -f mem.raw windows.pslist   # Running processes\n"
+                "volatility3 -f mem.raw windows.pstree  # Process tree (spot injected)\n"
+                "volatility3 -f mem.raw windows.netscan # Active network connections\n"
+                "volatility3 -f mem.raw windows.malfind # Injected/malicious code\n"
+                "volatility3 -f mem.raw windows.cmdline # Command line arguments\n"
+                "volatility3 -f mem.raw windows.filescan# Cached files\n"
+                "```\n\n"
+                "**Indicators of Compromise in Memory:**\n"
+                "- Unsigned processes in system32 directories\n"
+                "- Processes with no parent or unusual parent (e.g. cmd.exe spawned by Word)\n"
+                "- Active connections to suspicious IPs on unusual ports\n"
+                "- Hollowed processes (legitimate name, malicious code)\n"
+            )
+
+        # ── Network / PCAP / Traffic ─────────────────────────────────────────
+        elif any(kw in q_lower for kw in ["network", "pcap", "packet", "traffic", "wireshark", "tshark", "nmap", "port", "scan", "firewall", "ids", "ips"]):
+            topic_guide = (
+                "## 🌐 Network Forensics & Traffic Analysis\n\n"
+                "**Wireshark/tshark Quick Commands:**\n"
+                "```bash\n"
+                "tshark -r capture.pcap -Y 'http' -T fields -e http.host -e http.request.uri\n"
+                "tshark -r capture.pcap -Y 'dns' -T fields -e dns.qry.name\n"
+                "tshark -r capture.pcap -Y 'ip.addr==192.168.1.100' -w filtered.pcap\n"
+                "```\n\n"
+                "**Key Analysis Points:**\n"
+                "- DNS queries → look for DGA (Domain Generation Algorithm) patterns\n"
+                "- HTTP POST requests → possible data exfiltration\n"
+                "- Large data transfers to external IPs → C2 beaconing\n"
+                "- TLS SNI headers → identify encrypted malicious endpoints\n"
+                "- Beaconing patterns → regular interval connections to same IP = C2\n\n"
+                "**CCID OSINT Tools Available:** Nmap (port scan), Shodan (internet-wide scan), IP Geolocation, WHOIS, Domain Reputation"
+            )
+
+        # ── Dashboard / Case metrics ─────────────────────────────────────────
+        elif any(kw in q_lower for kw in ["case", "dashboard", "count", "stat", "how many", "evidence", "finding", "report", "suspect", "overview"]):
+            topic_guide = (
+                f"## 📊 CCID Live Dashboard Telemetry\n\n"
                 f"{telemetry}\n\n"
-                f"**Dashboard Actions Available:**\n"
-                f"- Navigate to **Cases** tab to view open/investigating cases.\n"
-                f"- Navigate to **Evidence Vault** to inspect hash values and artifacts.\n"
-                f"- Navigate to **Reports** tab to generate legal FIR summaries."
+                f"**Navigate the Dashboard:**\n"
+                f"- 📂 **Cases** — View, create, and manage cyber crime cases\n"
+                f"- 🗃️ **Evidence Vault** — Upload and analyse digital evidence\n"
+                f"- 🔍 **OSINT** — Run CVE, WHOIS, Shodan, IP Geo lookups\n"
+                f"- 📈 **Reports** — Generate legal-ready FIR and forensic reports\n"
+                f"- 🕵️ **Suspects** — Manage suspect profiles and correlations"
             )
-        elif "evidence" in q_lower or "chain" in q_lower or "seiz" in q_lower or "mobile" in q_lower or "phone" in q_lower or "hack" in q_lower:
-            topic_guide = (
-                "### [IR] Incident Response & Digital Evidence Preservation Protocol\n"
-                "1. **Isolate**: Disconnect the compromised device from all networks (WiFi, Cellular) immediately to prevent further damage or remote wipes. Place mobile devices in Airplane Mode or a Faraday bag.\n"
-                "2. **Preserve**: Do NOT reboot or shut down the device unless absolutely necessary (volatile memory will be lost). Do not attempt to 'clean' the malware yourself.\n"
-                "3. **Document**: Take photos of the compromised screen using another device. Note down any suspicious activity, timestamps, and messages.\n"
-                "4. **Report & Acquire**: Hand over the device to a digital forensics expert or law enforcement with a proper Chain of Custody form. They will create a bit-by-bit forensic image (SHA-256 verified) before any analysis begins."
-            )
-        elif "memory" in q_lower or "ram" in q_lower or "volatil" in q_lower:
-            topic_guide = (
-                "### [RAM] Memory Forensics & Live Acquisition Protocol\n"
-                "1. **Live Acquisition**: Capture volatile memory using `WinPmem`, `FTK Imager CLI`, or `LiME` prior to shutting down target machine.\n"
-                "2. **Process Triage**: Analyze process tree via `volatility3 -f mem.raw windows.pslist` or `pstree` to spot unlinked/injected processes.\n"
-                "3. **Network Connections**: Inspect active sockets via `volatility3 windows.netscan` for unauthorized C2 connections."
-            )
-        elif "network" in q_lower or "pcap" in q_lower or "packet" in q_lower or "traffic" in q_lower:
-            topic_guide = (
-                "### [NET] Network Forensic & Traffic Analysis Protocol\n"
-                "1. **Packet Filter**: Filter suspicious IP ranges using `tshark -r capture.pcap -Y 'ip.addr == X.X.X.X'`.\n"
-                "2. **DNS & HTTP Reconstruction**: Inspect unencrypted payload streams and DNS query logs for DGA (Domain Generation Algorithms).\n"
-                "3. **TLS/SSL Decryption**: Extract server certificate SNI headers to identify encrypted malicious endpoints."
-            )
+
+        # ── General cyber security knowledge ────────────────────────────────
         else:
             topic_guide = (
-                f"### [DFIR] CCID Dashboard Guidance\n"
+                f"## 🔐 CCID Cyber Copilot — Expert Guidance\n\n"
+                f"**Your Query:** {question}\n\n"
+                f"**I specialise in:**\n"
+                f"- 🛡️ Cyber Security Incident Response\n"
+                f"- ⚖️ Indian Cyber Laws (IT Act, BNS, BNSS, DPDPA, POCSO)\n"
+                f"- 🔍 Digital Forensics (Disk, Memory, Network, Mobile, Image)\n"
+                f"- 🚨 Cyber Crime Guidance (Financial Fraud, Hacking, Sextortion, Stalking)\n"
+                f"- 📊 CCID Dashboard Analysis\n\n"
                 f"{telemetry}\n\n"
-                f"1. **Triage & Preservation**: Ensure all primary storage artifacts (disk images, logs, memory dumps) are hashed (SHA-256) and write-protected.\n"
-                f"2. **Forensic Tools**: Utilize verified open-source and commercial suites (Autopsy, Volatility 3, Wireshark, CyberChef).\n"
-                f"3. **Legal Admissibility**: Ensure proper documentation of timestamps, hash verification logs, and hardware chain of custody."
+                f"**Forensic Best Practices:**\n"
+                f"1. **Preserve** all artifacts (SHA-256 hash verified, write-protected)\n"
+                f"2. **Document** chain of custody for every piece of evidence\n"
+                f"3. **Analyse** with certified tools (Autopsy, Volatility 3, Wireshark)\n"
+                f"4. **Report** with Section 65B certificates for court admissibility\n"
+                f"5. **Escalate** to CERT-In for critical infrastructure incidents\n\n"
+                f"📞 **Emergency:** Call 1930 | 🌐 **Report:** cybercrime.gov.in"
             )
 
         answer = (
-            f"**CCID Dashboard Copilot Assistant**\n\n"
             f"{topic_guide}\n\n"
             f"---\n"
-            f"*Query:* {question}\n"
-            f"*{'Context Snippet included: ' + context[:100] if context else 'Dashboard Telemetry Grounded.'}*"
+            f"*💡 Powered by CCID Expert Knowledge Engine — {'AI provider offline, using built-in knowledge base.' if err_msg else 'Dashboard Telemetry Active.'}*"
         )
         return {
             "success": True,

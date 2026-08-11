@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import casesApi from '@/api/cases';
 import { StatusBadge, PriorityBadge } from '@/components/shared/Badges';
 import type { Case, CaseStatus, CasePriority } from '@/types';
@@ -37,7 +38,8 @@ const PlusIcon = () => (
 );
 
 export default function CaseList() {
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
+  const [searchParams] = useSearchParams();
+  const [filters, setFilters] = useState({ status: '', priority: '', search: searchParams.get('search') ?? '' });
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 

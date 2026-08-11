@@ -13,6 +13,7 @@ class OsintService:
         # Read directly from env so we always get the latest value,
         # even if the .env file was updated after the process started.
         self.otx_key = os.environ.get("ALIENVAULT_OTX_KEY", "") or settings.alienvault_otx_key
+        self.shodan_key = os.environ.get("SHODAN_API_KEY", "")
         self.headers = {}
         if self.otx_key:
             self.headers["X-OTX-API-KEY"] = self.otx_key
@@ -398,55 +399,6 @@ class OsintService:
 
 
 
-    async def lookup_whois(self, domain: str) -> Dict[str, Any]:
-        """Perform a WHOIS lookup using RDAP (Registration Data Access Protocol)."""
-        endpoint = f"https://rdap.org/domain/{domain}"
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(endpoint, timeout=10.0)
-                if response.status_code == 200:
-                    data = response.json()
-                    
-                    registrar = "Unknown"
-                    creation_date = "Unknown"
-                    expiration_date = "Unknown"
-                    nameservers = []
-                    
-                    if "entities" in data:
-                        for entity in data["entities"]:
-                            if "roles" in entity and "registrar" in entity["roles"]:
-                                if "vcardArray" in entity:
-                                    try:
-                                        registrar = entity["vcardArray"][1][1][3]
-                                    except (IndexError, TypeError):
-                                        registrar = entity.get("handle", "Unknown")
-                                        
-                    if "events" in data:
-                        for event in data["events"]:
-                            if event.get("eventAction") == "registration":
-                                creation_date = event.get("eventDate", "Unknown")
-                            elif event.get("eventAction") == "expiration":
-                                expiration_date = event.get("eventDate", "Unknown")
-                                
-                    if "nameservers" in data:
-                        for ns in data["nameservers"]:
-                            nameservers.append(ns.get("ldhName", "Unknown"))
-                            
-                    return {
-                        "success": True,
-                        "domain": domain,
-                        "registrar": registrar,
-                        "creation_date": creation_date,
-                        "expiration_date": expiration_date,
-                        "nameservers": nameservers
-                    }
-                elif response.status_code == 404:
-                    return {"success": False, "error": "Domain not found or no RDAP record available."}
-                else:
-                    return {"success": False, "error": f"RDAP API returned {response.status_code}"}
-            except Exception as e:
-                return {"success": False, "error": str(e)}
-
 
 
     async def lookup_whois(self, domain: str) -> Dict[str, Any]:
@@ -495,5 +447,74 @@ class OsintService:
                     return {"success": False, "error": "Domain not found or no RDAP record available."}
                 else:
                     return {"success": False, "error": f"RDAP API returned {response.status_code}"}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+    async def lookup_shodan(self, ip: str) -> Dict[str, Any]:
+        """Perform a Shodan host lookup for an IP address."""
+        
+        async def fetch_internetdb():
+            # Shodan's free InternetDB API requires no authentication
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(f"https://internetdb.shodan.io/{ip}", timeout=10.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        
+                        # Fetch org/isp from ip-api since InternetDB doesn't have it
+                        org = "Unknown"
+                        isp = "Unknown"
+                        try:
+                            geo_resp = await client.get(f"http://ip-api.com/json/{ip}", timeout=5.0)
+                            if geo_resp.status_code == 200:
+                                geo_data = geo_resp.json()
+                                org = geo_data.get("org") or geo_data.get("isp") or "Unknown"
+                                isp = geo_data.get("isp") or "Unknown"
+                        except Exception:
+                            pass
+
+                        return {
+                            "success": True, 
+                            "ip": data.get("ip", ip),
+                            "org": org,
+                            "isp": isp,
+                            "os": "Unknown",
+                            "ports": data.get("ports", []),
+                            "vulns": data.get("vulns", []),
+                            "hostnames": data.get("hostnames", []),
+                            "_note": "Data fetched from Shodan InternetDB (Free Tier)"
+                        }
+                    return {"success": False, "error": "No information available for that IP on Shodan InternetDB."}
+            except Exception as e:
+                return {"success": False, "error": f"InternetDB Error: {str(e)}"}
+
+        if not self.shodan_key:
+            return await fetch_internetdb()
+            
+        endpoint = f"https://api.shodan.io/shodan/host/{ip}?key={self.shodan_key}"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(endpoint, timeout=12.0)
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    return {
+                        "success": True,
+                        "ip": data.get("ip_str", ip),
+                        "org": data.get("org", "Unknown"),
+                        "isp": data.get("isp", "Unknown"),
+                        "os": data.get("os", "Unknown"),
+                        "ports": data.get("ports", []),
+                        "vulns": data.get("vulns", []),
+                        "hostnames": data.get("hostnames", [])
+                    }
+                elif response.status_code == 404:
+                    return {"success": False, "error": "No information available for that IP on Shodan."}
+                elif response.status_code in (401, 403):
+                    # Shodan API keys on free tier often get 403, or invalid key gets 401
+                    # Fallback to InternetDB
+                    return await fetch_internetdb()
+                else:
+                    return {"success": False, "error": f"Shodan API returned status {response.status_code}"}
             except Exception as e:
                 return {"success": False, "error": str(e)}

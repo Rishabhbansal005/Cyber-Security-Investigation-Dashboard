@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { osintApi, CveResult, DomainReputationResult } from '@/api/osint';
 
-export type ToolType = 'cve' | 'domain' | 'ipgeo' | 'nmap' | 'whois' | null;
+export type ToolType = 'cve' | 'domain' | 'ipgeo' | 'nmap' | 'whois' | 'shodan' | 'socmint' | null;
 
 interface OsintToolModalProps {
   isOpen: boolean;
@@ -50,6 +50,18 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
       action: 'Lookup',
       apiCall: osintApi.lookupWhois,
     },
+    shodan: {
+      title: 'Shodan Scanner',
+      placeholder: 'Enter IP address to lookup',
+      action: 'Scan',
+      apiCall: osintApi.lookupShodan,
+    },
+    socmint: {
+      title: 'SOCMINT Search',
+      placeholder: 'Enter username (e.g. johndoe)',
+      action: 'Search',
+      apiCall: osintApi.lookupSocmint,
+    },
   }[toolType];
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -61,7 +73,10 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
     setResult(null);
 
     try {
-      const res = await toolConfig.apiCall(query);
+      // For SOCMINT, usernames shouldn't have spaces
+      const searchQuery = toolType === 'socmint' ? query.replace(/\s+/g, '') : query;
+      const res = await toolConfig.apiCall(searchQuery);
+      
       if (res.success) {
         setResult(res);
       } else {
@@ -341,6 +356,112 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {toolType === 'shodan' && (
+                <div>
+                  <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#f8fafc' }}>Shodan Results for {result.ip}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Organization</div>
+                      <div style={{ fontSize: '16px', color: '#e2e8f0' }}>{result.org || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>ISP</div>
+                      <div style={{ fontSize: '16px', color: '#e2e8f0' }}>{result.isp || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>OS</div>
+                      <div style={{ fontSize: '16px', color: '#e2e8f0' }}>{result.os || 'N/A'}</div>
+                    </div>
+                  </div>
+                  {result.hostnames && result.hostnames.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Hostnames</div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {result.hostnames.map((hn: string, idx: number) => (
+                          <span key={idx} style={{ padding: '4px 10px', background: 'rgba(56,189,248,0.1)', color: '#38bdf8', borderRadius: '4px', fontSize: '12px' }}>
+                            {hn}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {result.ports && result.ports.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Open Ports</div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {result.ports.map((port: number, idx: number) => (
+                          <span key={idx} style={{ padding: '4px 10px', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: '4px', fontSize: '13px', fontWeight: 600 }}>
+                            {port}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {result.vulns && result.vulns.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Vulnerabilities</div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {result.vulns.map((vuln: string, idx: number) => (
+                          <span key={idx} style={{ padding: '4px 10px', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', border: '1px solid rgba(244,63,94,0.3)', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>
+                            {vuln}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {toolType === 'socmint' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', color: '#f8fafc' }}>SOCMINT Results for "{result.username}"</h3>
+                    <span style={{
+                      background: 'rgba(99,102,241,0.2)', color: '#818cf8',
+                      padding: '4px 10px', borderRadius: '4px', fontWeight: 600, fontSize: '13px'
+                    }}>
+                      Found on {result.found_count} / {result.total_platforms_checked} Platforms
+                    </span>
+                  </div>
+
+                  {result.results && result.results.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {result.results.map((r: any, idx: number) => (
+                        <div key={idx} style={{ 
+                          padding: '12px', 
+                          background: 'rgba(255,255,255,0.02)', 
+                          border: `1px solid ${r.exists ? 'rgba(52, 211, 153, 0.3)' : 'rgba(255,255,255,0.05)'}`,
+                          borderRadius: '8px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#e2e8f0', marginBottom: '4px' }}>{r.platform}</div>
+                            {r.exists ? (
+                              <a href={r.url} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#38bdf8', textDecoration: 'none' }}>{r.url}</a>
+                            ) : (
+                              <div style={{ fontSize: '13px', color: '#64748b' }}>Not found</div>
+                            )}
+                          </div>
+                          <div>
+                            {r.exists ? (
+                              <span style={{ padding: '4px 8px', background: 'rgba(52,211,153,0.1)', color: '#34d399', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>Active</span>
+                            ) : (
+                              <span style={{ padding: '4px 8px', background: 'rgba(148,163,184,0.1)', color: '#94a3b8', borderRadius: '4px', fontSize: '12px' }}>Available</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>
+                      No social media platforms checked.
                     </div>
                   )}
                 </div>

@@ -459,9 +459,20 @@ class DashboardStats(BaseModel):
     reports_generated: int
     total_correlations: int = 0
     critical_correlations: int = 0
+    funds_frozen: float = 0.0
+    suspects_tracked: int = 0
+    gangs_identified: int = 0
     recent_activity: List[Dict[str, Any]] = []
     priority_distribution: List[Dict[str, Any]] = []
     trend_data: List[Dict[str, Any]] = []
+
+class Hotspot(BaseModel):
+    id: int
+    label: str
+    left: float
+    top: float
+    severe: bool
+    city: str
 
 
 # ============================================================

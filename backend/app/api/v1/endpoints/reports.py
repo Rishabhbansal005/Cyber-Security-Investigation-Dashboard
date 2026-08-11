@@ -107,6 +107,44 @@ async def list_reports(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/65b/{evidence_id}")
+async def generate_65b_cert(
+    evidence_id: str,
+    current_user: CurrentUser = Depends(require_investigator)
+):
+    """Generate and return a Section 65B Certificate for a specific evidence item."""
+    try:
+        db = get_supabase_admin()
+        
+        ev_result = db.table("evidence").select("*").eq("id", evidence_id).single().execute()
+        if not ev_result.data:
+            raise HTTPException(status_code=404, detail="Evidence not found")
+        evidence = ev_result.data
+        
+        case_result = db.table("cases").select("*").eq("id", evidence["case_id"]).single().execute()
+        if not case_result.data:
+            raise HTTPException(status_code=404, detail="Case not found")
+        case = case_result.data
+        
+        inv_result = db.table("users").select("*").eq("id", current_user.id).single().execute()
+        investigator = inv_result.data or {"full_name": current_user.email, "role": current_user.role}
+        
+        from app.services.report_service import generate_65b_certificate
+        pdf_bytes = generate_65b_certificate(evidence, case, investigator)
+        
+        filename = f"Section_65B_{evidence.get('evidence_number', evidence_id)}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"65B Generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("", response_model=ReportResponse, status_code=status.HTTP_202_ACCEPTED)
 async def generate_report(

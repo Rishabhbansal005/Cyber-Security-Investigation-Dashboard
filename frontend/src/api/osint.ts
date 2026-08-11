@@ -99,6 +99,19 @@ export interface WhoisResult {
   nameservers?: string[];
 }
 
+// Shodan
+export interface ShodanResult {
+  success: boolean;
+  error?: string;
+  ip?: string;
+  org?: string;
+  isp?: string;
+  os?: string;
+  ports?: number[];
+  vulns?: string[];
+  hostnames?: string[];
+}
+
 export const osintApi = {
   search: async (query: string): Promise<OsintSearchResponse> => {
     const response = await apiClient.get<OsintSearchResponse>('/osint/search', {
@@ -155,6 +168,20 @@ export const osintApi = {
   lookupWhois: async (domain: string): Promise<WhoisResult> => {
     const response = await apiClient.get<WhoisResult>('/osint/whois', {
       params: { domain },
+    });
+    return response.data;
+  },
+
+  lookupShodan: async (ip: string): Promise<ShodanResult> => {
+    const response = await apiClient.get<ShodanResult>('/osint/shodan', {
+      params: { ip },
+    });
+    return response.data;
+  },
+
+  lookupSocmint: async (username: string): Promise<any> => {
+    const response = await apiClient.get<any>('/osint/socmint', {
+      params: { username, _t: new Date().getTime() },
     });
     return response.data;
   }

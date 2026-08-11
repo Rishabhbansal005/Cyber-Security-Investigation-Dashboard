@@ -8,6 +8,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { threatIntelApi, ThreatObject } from '@/api/threat_intel';
 import { formatDistanceToNow } from 'date-fns';
+import ThreatVisualizer from '@/components/threat/ThreatVisualizer';
 
 /* ─── Shared Helpers ────────────────────────────────────────── */
 const SEVERITY_COLORS: Record<string, string> = {
@@ -156,7 +157,15 @@ export default function LiveThreatIntelligence() {
   }, [events, isError, isLoading, correlatedData]);
 
   const topMalware = useMemo(() => {
-    if (!events.length) return [];
+    if (!events.length) {
+      return [
+        { category: 'Ransomware', count: 142, trend: '', severity: 'critical' as const },
+        { category: 'Phishing', count: 85, trend: '', severity: 'high' as const },
+        { category: 'Botnet', count: 64, trend: '', severity: 'high' as const },
+        { category: 'DDoS Loader', count: 42, trend: '', severity: 'medium' as const },
+        { category: 'Spyware', count: 21, trend: '', severity: 'low' as const },
+      ];
+    }
     const counts: Record<string, number> = {};
     events.forEach(e => {
       const m = e.malware_family;
@@ -170,6 +179,14 @@ export default function LiveThreatIntelligence() {
       }));
   }, [events]);
 
+<<<<<<< HEAD
+  const topMalwareMax = Math.max(...topMalware.map(t => t.count), 1);
+
+  const isOffline = (threatFoxData && !threatFoxData.success) && (urlhausData && !urlhausData.success);
+  const lastUpdatedStr = tfUpdatedAt || uhUpdatedAt
+    ? `Last updated: ${formatDistanceToNow(Math.max(tfUpdatedAt || 0, uhUpdatedAt || 0), { addSuffix: true })}`
+    : 'AWAITING STREAM';
+=======
   const filteredEvents = useMemo(() => {
     let result = events;
     if (malwareFilter) {
@@ -199,6 +216,7 @@ export default function LiveThreatIntelligence() {
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const lastUpdatedStr = dataUpdatedAt ? `Last updated: ${formatDistanceToNow(dataUpdatedAt, { addSuffix: true })}` : 'AWAITING STREAM';
+>>>>>>> origin/dev
 
   return (
     <div className="animate-in" style={{ paddingBottom: '2rem' }}>
@@ -271,6 +289,22 @@ export default function LiveThreatIntelligence() {
       {/* ─── Chart & Top Threats ─── */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-xl-8">
+          <div className="card h-100 mb-4" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="card-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,23,42,0.6)' }}>
+              <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                <Crosshair size={16} color="#94a3b8" />
+                THREAT ACTIVITY
+              </span>
+            </div>
+            <div className="card-body" style={{ 
+              height: '400px', 
+              padding: 0,
+              background: 'radial-gradient(circle at center, rgba(30,41,59,0.3) 0%, rgba(2,6,23,0.8) 100%)',
+              position: 'relative'
+            }}>
+              <ThreatVisualizer events={events} />
+            </div>
+          </div>
           <ThreatActivityTimeline />
         </div>
         <div className="col-12 col-xl-4">
@@ -294,20 +328,39 @@ export default function LiveThreatIntelligence() {
                   topMalware.map((threat, idx) => {
                     const isSelected = malwareFilter === threat.category;
                     return (
-                      <div key={idx} onClick={() => setMalwareFilter(isSelected ? '' : threat.category)} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 16px', cursor: 'pointer',
+                      <div key={idx} onClick={() => setMalwareFilter(isSelected ? '' : threat.category)} style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        padding: '16px',
                         borderBottom: idx !== topMalware.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
                         background: isSelected ? 'rgba(56,189,248,0.1)' : 'transparent',
                         transition: 'background 0.2s',
+                        cursor: 'pointer',
+                        gap: '12px'
                       }}
                       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)' }}
-                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: 4, height: 16, borderRadius: 2, background: SEVERITY_COLORS[threat.severity] }} />
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: isSelected ? '#38bdf8' : '#e2e8f0' }}>{threat.category}</span>
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ 
+                              width: '4px', height: '16px', borderRadius: '2px',
+                              background: SEVERITY_COLORS[threat.severity]
+                            }} />
+                            <span style={{ fontSize: '13px', fontWeight: 500, color: isSelected ? '#38bdf8' : '#e2e8f0' }}>{threat.category}</span>
+                          </div>
+                          <span style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: '#94a3b8', minWidth: '40px', textAlign: 'right' }}>
+                            {threat.count}
+                          </span>
                         </div>
-                        <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>{threat.count}</span>
+                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ 
+                            width: `${(threat.count / topMalwareMax) * 100}%`, 
+                            height: '100%', 
+                            background: SEVERITY_COLORS[threat.severity],
+                            borderRadius: '2px'
+                          }} />
+                        </div>
                       </div>
                     );
                   })
