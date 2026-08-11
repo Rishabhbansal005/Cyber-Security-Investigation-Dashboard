@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     threatfox_auth_key: str = ""
     urlhaus_auth_key: str = ""
     anthropic_api_key: str = ""
+    shodan_api_key: str = ""
 
     # AI Integration Governance & Safety Settings
     ai_mode: str = "disabled"  # "disabled" | "local_only" | "cloud_approved"

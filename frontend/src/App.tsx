@@ -46,6 +46,9 @@ import ReportList from '@/pages/reports/ReportList';
 import ReportWizard from '@/pages/reports/ReportWizard';
 import ReportDetail from '@/pages/reports/ReportDetail';
 
+// Audit Logs module
+import AuditLogs from '@/pages/audit/AuditLogs';
+
 // React Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +104,9 @@ function App() {
                 <Route path="/reports" element={<ReportList />} />
                 <Route path="/reports/new" element={<ReportWizard />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />
+
+                {/* Audit Logs */}
+                <Route path="/audit" element={<AuditLogs />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

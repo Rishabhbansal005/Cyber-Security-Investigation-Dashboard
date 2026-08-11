@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+# noqa: F401
+"""Audit utility script — run directly to inspect Supabase table schemas."""
 import asyncio
-from app.core.supabase_client import get_supabase_admin
+from app.core.supabase_client import get_supabase_admin  # type: ignore[import]
 
 async def main():
     db = get_supabase_admin()

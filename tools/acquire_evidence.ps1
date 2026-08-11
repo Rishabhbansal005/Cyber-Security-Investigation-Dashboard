@@ -55,7 +55,6 @@ $LnkDir = Join-Path $OutputDir "LNK_Files"
 New-Item -ItemType Directory -Force -Path $BrowserDir | Out-Null
 New-Item -ItemType Directory -Force -Path $LnkDir | Out-Null
 
-$UsersPath = "C:\Users\*"
 $UserDirs = Get-ChildItem -Path "C:\Users" -Directory
 
 foreach ($UserDir in $UserDirs) {

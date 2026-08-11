@@ -150,7 +150,26 @@ export const CyberCopilotChat: React.FC = () => {
                 <div style={{ padding: '10px 14px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.4', background: msg.sender === 'user' ? '#2563eb' : (msg.status === 'blocked' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(30, 41, 59, 0.9)'), color: msg.sender === 'user' ? '#ffffff' : '#e2e8f0', border: msg.sender === 'copilot' ? (msg.status === 'blocked' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)') : 'none' }}>
                   <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
 
-
+                  {/* Human-in-the-Loop Verification Block */}
+                  {msg.sender === 'copilot' && (msg.text.toLowerCase().includes('freeze') || msg.text.toLowerCase().includes('section 91') || msg.text.toLowerCase().includes('trace') || msg.text.toLowerCase().includes('dispatch')) && (
+                    <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fca5a5', fontWeight: 600, fontSize: '11px', marginBottom: '8px' }}>
+                        ⚠️ Officer Sign-off Required
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#cbd5e1', marginBottom: '8px', lineHeight: 1.4 }}>
+                        AI has suggested a high-risk action. You must manually authorize this before it can be executed on the CCID platform.
+                      </div>
+                      {msg.review_status === 'officer_approved' ? (
+                        <button disabled style={{ width: '100%', padding: '6px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                          ✓ Authorized & Logged
+                        </button>
+                      ) : (
+                        <button onClick={() => handleApproveDraft(msg.id)} style={{ width: '100%', padding: '6px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>
+                          Authorize & Log Action
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start', gap: '8px' }}>
                   <span>{msg.timestamp}</span>

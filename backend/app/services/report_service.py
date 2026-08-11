@@ -814,3 +814,69 @@ def _format_date(date_val) -> str:
 
 def _badge_text(value: str) -> str:
     return value.upper().replace("_", " ") if value else "N/A"
+
+def generate_65b_certificate(
+    evidence: Dict[str, Any],
+    case: Dict[str, Any],
+    investigator: Dict[str, Any]
+) -> bytes:
+    """Generates a Section 65B Certificate under the Indian Evidence Act, 1872."""
+    buffer = io.BytesIO()
+    styles = get_styles()
+    
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4, rightMargin=2.5*cm, leftMargin=2.5*cm, topMargin=3*cm, bottomMargin=3*cm,
+        title=f"Section 65B Certificate - {evidence.get('original_file_name', 'N/A')}"
+    )
+
+    story = []
+    
+    # Header
+    story.append(Paragraph("CERTIFICATE UNDER SECTION 65B(4) OF THE INDIAN EVIDENCE ACT, 1872", styles["cover_super"]))
+    story.append(Spacer(1, 1*cm))
+    
+    inv_name = investigator.get("full_name") or "N/A"
+    inv_role = investigator.get("role") or "Investigator"
+    
+    # Body
+    body_text = (
+        f"I, <b>{inv_name}</b>, functioning as <b>{inv_role}</b>, hereby certify and state as follows:<br/><br/>"
+        
+        f"1. That the digital evidence marked as <b>{evidence.get('evidence_number', 'N/A')}</b> "
+        f"(File Name: {evidence.get('original_file_name', 'N/A')}) pertaining to Case Number <b>{case.get('case_number', 'N/A')}</b> "
+        f"was produced by a computer / electronic device which was used regularly to store or process information for the purposes "
+        f"of activities regularly carried on over that period.<br/><br/>"
+        
+        f"2. That during the said period, information of the kind contained in the electronic record or of the kind from which "
+        f"the information so contained is derived was regularly fed into the computer in the ordinary course of the said activities.<br/><br/>"
+        
+        f"3. That throughout the material part of the said period, the computer was operating properly or, if not, then in respect "
+        f"of any period in which it was not operating properly or was out of operation during that part of the period, was not such "
+        f"as to affect the electronic record or the accuracy of its contents.<br/><br/>"
+        
+        f"4. That the information contained in the electronic record reproduces or is derived from such information fed into the "
+        f"computer in the ordinary course of the said activities.<br/><br/>"
+        
+        f"<b>Cryptographic Hash Details:</b><br/>"
+        f"MD5: {evidence.get('hash_md5', 'N/A')}<br/>"
+        f"SHA-1: {evidence.get('hash_sha1', 'N/A')}<br/>"
+        f"SHA-256: {evidence.get('hash_sha256', 'N/A')}<br/><br/>"
+        
+        f"5. I state that the above details are true and correct to the best of my knowledge and belief, and this certificate "
+        f"is issued for the purpose of submitting the electronic record as evidence in accordance with the provisions of "
+        f"Section 65B of the Indian Evidence Act, 1872."
+    )
+    
+    story.append(Paragraph(body_text, ParagraphStyle("b_body", parent=styles["body"], fontSize=12, leading=18)))
+    story.append(Spacer(1, 3*cm))
+    
+    # Signature
+    story.append(Paragraph("_" * 30, styles["body"]))
+    story.append(Spacer(1, 0.3*cm))
+    story.append(Paragraph(f"<b>Signature</b>", styles["body"]))
+    story.append(Paragraph(f"Name: {inv_name}", styles["body"]))
+    story.append(Paragraph(f"Designation: {inv_role}", styles["body"]))
+    story.append(Paragraph(f"Date: {datetime.utcnow().strftime('%Y-%m-%d')}", styles["body"]))
+    
+    doc.build(story)
+    return buffer.getvalue()

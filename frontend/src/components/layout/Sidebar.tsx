@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface NavItem {
   path: string;
@@ -97,6 +98,11 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/threat-intelligence', icon: Icons.threat, label: 'Live Threat Intel', section: 'ANALYSIS' },
   { path: '/risk',       icon: Icons.risk,      label: 'Risk Assessment',  section: 'ANALYSIS' },
   { path: '/reports',    icon: Icons.reports,   label: 'Reports',          section: 'OUTPUT' },
+  { path: '/audit',      icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ), label: 'Audit Logs', section: 'SYSTEM' },
 ];
 
 interface SidebarProps {
@@ -108,6 +114,12 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -178,10 +190,10 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
                 className={({ isActive }) =>
                   `sidebar-nav-item${isActive ? ' active' : ''}`
                 }
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? t(`nav.${item.label.toLowerCase().replace(' ', '_')}`, item.label) : undefined}
               >
                 <span className="nav-icon-wrap">{item.icon}</span>
-                {!collapsed && <span className="nav-label">{item.label}</span>}
+                {!collapsed && <span className="nav-label">{t(`nav.${item.label.toLowerCase().replace(' ', '_')}`, item.label)}</span>}
                 {!collapsed && item.badge && item.badge > 0 && (
                   <span className="nav-badge">{item.badge}</span>
                 )}
@@ -190,6 +202,52 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
           </div>
         ))}
       </nav>
+
+      {/* Language Toggle */}
+      <div style={{ padding: collapsed ? '4px 8px' : '4px 12px', marginBottom: '4px' }}>
+        <button
+          onClick={toggleLanguage}
+          title={collapsed ? 'Change Language' : undefined}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: collapsed ? '8px' : '8px 12px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            background: 'none',
+            border: '1px solid var(--border-subtle, #2a2d3e)',
+            borderRadius: 'var(--radius-sm, 6px)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 500,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.1)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.4)';
+            (e.currentTarget as HTMLElement).style.color = '#34d399';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = 'none';
+            (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-subtle, #2a2d3e)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+          }}
+        >
+          <div style={{
+            fontSize: '10px',
+            fontWeight: 700,
+            padding: '2px 4px',
+            border: '1px solid currentColor',
+            borderRadius: '4px',
+            lineHeight: 1
+          }}>
+            {i18n.language === 'hi' ? 'HI' : 'EN'}
+          </div>
+          {!collapsed && <span>{i18n.language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}</span>}
+        </button>
+      </div>
 
       {/* Contact / Support */}
       <div style={{ padding: collapsed ? '4px 8px' : '4px 12px', marginBottom: '4px' }}>

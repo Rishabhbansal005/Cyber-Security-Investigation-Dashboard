@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from app.core.security import get_current_user, require_investigator, CurrentUser
 from app.core.supabase_client import get_supabase_admin
 from app.models.schemas import (
@@ -31,7 +31,6 @@ async def list_findings(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from app.services.risk_service import auto_update_case_risk
 from app.services.correlation_engine import generate_correlations_for_case
 

@@ -35,6 +35,23 @@ class CaseNarrativeRequest(BaseModel):
 class ApproveDraftRequest(BaseModel):
     audit_log_id: str
 
+_VALID_STATUSES = {"success", "blocked", "failed", "rate_limited"}
+
+def _normalize_status(status: str) -> str:
+    """
+    Map AI service status values to valid ai_audit_log CHECK constraint values:
+    CHECK (response_status IN ('success', 'blocked', 'failed', 'rate_limited'))
+    """
+    if status in _VALID_STATUSES:
+        return status
+    if "block" in status or "offtopic" in status:
+        return "blocked"
+    if "fallback" in status or "success" in status:
+        return "success"
+    if "rate" in status or "429" in status:
+        return "rate_limited"
+    return "failed"
+
 # Helper to log AI Audit record to Supabase
 async def log_ai_audit(
     case_id: Optional[str],
@@ -55,7 +72,7 @@ async def log_ai_audit(
             "provider_used": provider_used,
             "data_classification": data_classification,
             "prompt_summary": sanitized_summary,
-            "response_status": response_status,
+            "response_status": _normalize_status(response_status),
             "timestamp": datetime.utcnow().isoformat()
         }
         res = db.table("ai_audit_log").insert(record).execute()

@@ -6,6 +6,30 @@ import { format } from 'date-fns';
 import { RiskBadge } from './RiskList';
 import RiskForm from './RiskForm';
 
+const parseArray = (val: any): any[] => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('{') && val.endsWith('}')) {
+      return val.slice(1, -1).split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+    }
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      if (val.trim()) return val.split(',').map(s => s.trim());
+    }
+  }
+  return [];
+};
+
+const renderArrayItem = (item: any): string => {
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object' && item !== null) {
+    return item.name || item.title || item.label || item.description || JSON.stringify(item);
+  }
+  return String(item);
+};
+
 const MatrixCell = ({ l, i, currentL, currentI }: { l: number, i: number, currentL: number, currentI: number }) => {
   const score = l * i;
   let bg = 'var(--bg-input)';
@@ -41,7 +65,29 @@ const MatrixCell = ({ l, i, currentL, currentI }: { l: number, i: number, curren
   );
 };
 
-export default function RiskDetail() {
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 50, color: 'red', background: 'white', position: 'fixed', inset: 0, zIndex: 99999, overflow: 'auto' }}>
+          <h1>Fatal React Error</h1>
+          <pre>{this.state.error?.message}</pre>
+          <pre>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function RiskDetailContent() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -141,7 +187,6 @@ export default function RiskDetail() {
       )}
 
       <div className="row" style={{ gap: '24px', flexWrap: 'wrap', margin: 0 }}>
-        {/* Left Content */}
         <div style={{ flex: '1 1 60%', minWidth: '320px', padding: 0 }}>
           <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
             <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -149,9 +194,9 @@ export default function RiskDetail() {
               <div>
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Threat Actors</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {assessment.threat_actors?.length > 0 ? assessment.threat_actors.map((ta: string, idx: number) => (
+                  {parseArray(assessment.threat_actors).length > 0 ? parseArray(assessment.threat_actors).map((ta: any, idx: number) => (
                     <span key={idx} style={{ background: 'var(--danger-muted)', color: 'var(--danger)', padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-                      {ta}
+                      {renderArrayItem(ta)}
                     </span>
                   )) : <span style={{ color: 'var(--text-muted)' }}>None identified</span>}
                 </div>
@@ -160,9 +205,9 @@ export default function RiskDetail() {
               <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 32 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Affected Assets</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {assessment.affected_assets?.length > 0 ? assessment.affected_assets.map((aa: string, idx: number) => (
+                  {parseArray(assessment.affected_assets).length > 0 ? parseArray(assessment.affected_assets).map((aa: any, idx: number) => (
                     <span key={idx} style={{ background: 'var(--teal-muted)', color: 'var(--teal)', padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-                      {aa}
+                      {renderArrayItem(aa)}
                     </span>
                   )) : <span style={{ color: 'var(--text-muted)' }}>None identified</span>}
                 </div>
@@ -171,9 +216,9 @@ export default function RiskDetail() {
               <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 32 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mitigation Measures</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {assessment.mitigation_measures?.length > 0 ? assessment.mitigation_measures.map((mm: string, idx: number) => (
+                  {parseArray(assessment.mitigation_measures).length > 0 ? parseArray(assessment.mitigation_measures).map((mm: any, idx: number) => (
                     <span key={idx} style={{ background: 'var(--success-muted)', color: 'var(--success)', padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-                      {mm}
+                      {renderArrayItem(mm)}
                     </span>
                   )) : <span style={{ color: 'var(--text-muted)' }}>None identified</span>}
                 </div>
@@ -194,14 +239,11 @@ export default function RiskDetail() {
           </div>
         </div>
 
-        {/* Right Sidebar: Matrix & Meta */}
         <div style={{ flex: '1 1 35%', minWidth: '320px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Risk Matrix */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '24px', border: '1px solid var(--border-subtle)' }}>
             <h4 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-heading)', margin: '0 0 20px 0' }}>Risk Matrix (5x5)</h4>
             
             <div style={{ display: 'flex', gap: 16 }}>
-              {/* Y-axis label */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 Likelihood
               </div>
@@ -216,7 +258,6 @@ export default function RiskDetail() {
                     </React.Fragment>
                   ))}
                 </div>
-                {/* X-axis label */}
                 <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 8 }}>
                   Impact
                 </div>
@@ -236,14 +277,13 @@ export default function RiskDetail() {
             </div>
           </div>
 
-          {/* Details Meta */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '24px', border: '1px solid var(--border-subtle)' }}>
             <h4 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-heading)', margin: '0 0 20px 0' }}>Assessment Metadata</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
                 { label: 'Assessed By', value: assessment.assessor?.full_name || 'System' },
-                { label: 'Created', value: format(new Date(assessment.created_at), 'PPP') },
-                { label: 'Updated', value: format(new Date(assessment.updated_at), 'PPP') },
+                { label: 'Created', value: assessment.created_at ? format(new Date(assessment.created_at), 'PPP') : 'N/A' },
+                { label: 'Updated', value: assessment.updated_at ? format(new Date(assessment.updated_at), 'PPP') : 'N/A' },
               ].map(({ label, value }, i) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: i !== 2 ? 12 : 0, borderBottom: i !== 2 ? '1px solid var(--border-subtle)' : 'none' }}>
                   <span style={{ fontSize: 14, color: 'var(--text-muted)', flexShrink: 0 }}>{label}</span>
@@ -258,5 +298,13 @@ export default function RiskDetail() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RiskDetail() {
+  return (
+    <ErrorBoundary>
+      <RiskDetailContent />
+    </ErrorBoundary>
   );
 }

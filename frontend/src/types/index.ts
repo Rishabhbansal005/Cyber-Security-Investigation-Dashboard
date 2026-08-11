@@ -283,6 +283,15 @@ export interface Report {
 // Dashboard Types
 // ============================================================
 
+export interface Hotspot {
+  id: number;
+  label: string;
+  left: number;
+  top: number;
+  severe: boolean;
+  city: string;
+}
+
 export interface DashboardStats {
   total_cases: number;
   open_cases: number;
@@ -294,6 +303,9 @@ export interface DashboardStats {
   reports_generated: number;
   total_correlations: number;
   critical_correlations: number;
+  funds_frozen: number;
+  suspects_tracked: number;
+  gangs_identified: number;
   recent_activity: ActivityItem[];
   priority_distribution: { name: string; value: number }[];
   trend_data: Array<{

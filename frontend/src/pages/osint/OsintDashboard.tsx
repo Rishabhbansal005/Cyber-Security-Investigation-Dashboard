@@ -247,7 +247,9 @@ export default function OsintDashboard() {
           { title: 'Port Scanner (Nmap)', desc: 'Scan common network ports for active services.', icon: I.tool, action: 'Scan Ports', type: 'nmap' as ToolType },
           { title: 'Domain Reputation', desc: 'Check domain health and threat pulses.', icon: I.globe, action: 'Check Domain', type: 'domain' as ToolType },
           { title: 'WHOIS Explorer', desc: 'Track domain history and registration records.', icon: I.search, action: 'WHOIS Lookup', type: 'whois' as ToolType },
-          { title: 'IP Geolocation', desc: 'Locate IP addresses and view ISP/org details.', icon: I.search, action: 'Locate IP', type: 'ipgeo' as ToolType }
+          { title: 'IP Geolocation', desc: 'Locate IP addresses and view ISP/org details.', icon: I.search, action: 'Locate IP', type: 'ipgeo' as ToolType },
+          { title: 'Shodan Scanner', desc: 'Discover exposed services and vulnerabilities on an IP.', icon: I.database, action: 'Lookup IP', type: 'shodan' as ToolType },
+          { title: 'SOCMINT Search', desc: 'Search for a username across various social platforms.', icon: I.user, action: 'Search Username', type: 'socmint' as ToolType }
         ].map((tool, idx) => (
           <div key={idx} className="col-12 col-md-6 col-xl-4">
             <div className="card h-100 tool-card" style={{ transition: 'all 0.2s', cursor: 'pointer', background: 'rgba(30,41,59,0.3)' }}
