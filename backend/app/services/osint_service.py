@@ -33,8 +33,12 @@ class OsintService:
         if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", query):
             return "IPv4"
         # Regex for MD5/SHA1/SHA256
-        if re.match(r"^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$", query):
-            return "file"
+        if re.match(r"^[a-fA-F0-9]{32}$", query):
+            return "FileHash-MD5"
+        if re.match(r"^[a-fA-F0-9]{40}$", query):
+            return "FileHash-SHA1"
+        if re.match(r"^[a-fA-F0-9]{64}$", query):
+            return "FileHash-SHA256"
         # Otherwise assume domain
         return "domain"
 
