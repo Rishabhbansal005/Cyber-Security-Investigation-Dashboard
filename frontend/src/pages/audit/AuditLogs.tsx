@@ -80,8 +80,8 @@ export default function AuditLogs() {
 
       <div className="card">
         <div className="filter-bar">
-          <div className="search-box" style={{ position: 'relative' }}>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13" style={{ position: 'absolute', left: 12, top: 10, color: '#64748b' }}>
+          <div className="search-wrapper" style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+            <svg className="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
               <circle cx="7" cy="7" r="4.5" />
               <path d="M10.5 10.5L14 14" strokeLinecap="round" />
             </svg>
@@ -91,7 +91,6 @@ export default function AuditLogs() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="form-control"
-              style={{ paddingLeft: 32 }}
             />
           </div>
         </div>
