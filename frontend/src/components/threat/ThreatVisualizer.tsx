@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { ThreatFoxEvent } from '@/api/threat_intel';
+import type { ThreatObject } from '@/api/threat_intel';
 
 interface ThreatVisualizerProps {
-  events: ThreatFoxEvent[];
+  events: ThreatObject[];
 }
 
 // Simulated map nodes (abstract grid coordinates)
@@ -23,7 +23,7 @@ export default function ThreatVisualizer({ events }: ThreatVisualizerProps) {
   const [activeAttacks, setActiveAttacks] = useState<any[]>([]);
   const [terminalLogs, setTerminalLogs] = useState<any[]>([]);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const queueRef = useRef<ThreatFoxEvent[]>([...events]);
+  const queueRef = useRef<ThreatObject[]>([...events]);
 
   const handleBlockIP = (id: string) => {
     setTerminalLogs(prev => prev.map(log => 
@@ -44,10 +44,10 @@ export default function ThreatVisualizer({ events }: ThreatVisualizerProps) {
       const evt_raw = queueRef.current.length > 0 ? queueRef.current.pop() : undefined;
 
       const evt: any = evt_raw || {
-        ioc: `${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.x.x`,
-        threat_type_desc: 'Malware Payload',
-        malware_printable: 'Unknown',
-        confidence_level: Math.random() * 100
+        ioc_list: [`${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.x.x`],
+        threat_name: 'Malware Payload',
+        malware_family: 'Unknown',
+        confidence: Math.random() * 100
       };
 
       // Pick random source node and target node
@@ -55,7 +55,7 @@ export default function ThreatVisualizer({ events }: ThreatVisualizerProps) {
       const targetNode = NODES.find(n => n.isHq) || NODES[0];
 
       const attackId = Math.random().toString(36).substr(2, 9);
-      const isCritical = (evt.confidence_level || 50) > 75;
+      const isCritical = (evt.confidence || evt.threat_score || 50) > 75;
       
       const newAttack = {
         id: attackId,
@@ -74,15 +74,16 @@ export default function ThreatVisualizer({ events }: ThreatVisualizerProps) {
 
       // Add to terminal
       const logTime = new Date().toLocaleTimeString('en-GB', { hour12: false });
-      const malware = evt.malware_printable || evt.malware_family || 'Generic Threat';
-      const type = evt.threat_type_desc || evt.threat_type || 'Attack';
+      const malware = evt.malware_family && evt.malware_family !== 'Unknown' ? evt.malware_family : 'Generic Threat';
+      const type = evt.threat_name || 'Attack';
+      const ioc = evt.ioc_list?.[0] || 'Unknown IOC';
       
       const logEntry = {
         id: attackId,
         time: logTime,
         isCritical,
         type,
-        ioc: evt.ioc,
+        ioc,
         malware,
         target: targetNode.label,
         blocked: false
