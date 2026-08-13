@@ -130,13 +130,12 @@ async def start_memory_analysis(
         raise HTTPException(status_code=400, detail="Evidence is not a supported memory dump format")
 
     # File size validation (10MB minimum for real dumps)
-    if 'mock' not in original_name.lower():
-        file_size = ev.get("file_size", 0)
-        if file_size < 10 * 1024 * 1024:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"File size ({file_size} bytes) is too small to be a valid memory dump. Memory dumps are typically larger than 10MB."
-            )
+    file_size = ev.get("file_size", 0)
+    if file_size < 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size ({file_size} bytes) is too small to be a valid memory dump. Memory dumps are typically larger than 10MB.",
+        )
 
     # Check if already analyzing
     res = db.table("memory_analysis_results").select("id").eq("evidence_id", evidence_id).execute()

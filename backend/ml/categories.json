@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "labels": [
+    "Financial Fraud",
+    "UPI Fraud",
+    "Phishing",
+    "Job/Employment Scam",
+    "Investment Scam",
+    "Social Media Scam",
+    "Account Takeover",
+    "Identity Theft",
+    "Online Shopping Scam",
+    "Sextortion",
+    "Cyberbullying/Harassment",
+    "Other"
+  ]
+}

@@ -11,8 +11,9 @@ export default function DelhiNCRHeatmap() {
   const { data: hotspots = [], isLoading } = useQuery({
     queryKey: ['dashboard-hotspots'],
     queryFn: () => dashboardApi.getHotspots(),
-    refetchInterval: 15000,
-    staleTime: 10000,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const visible = activeCity === 'All'
@@ -132,6 +133,12 @@ export default function DelhiNCRHeatmap() {
         {/* Vignette */}
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 40%, #0b1120 100%)', pointerEvents: 'none' }} />
 
+        {!isLoading && visible.length === 0 && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: 13, textAlign: 'center', padding: 24, zIndex: 5 }}>
+            No FIR jurisdictions mapped yet. Set Jurisdiction on a case (Delhi, Noida, Gurugram) to plot it here.
+          </div>
+        )}
+
         {/* Hotspot rendering */}
         {visible.map(h => (
           <React.Fragment key={h.id}>
@@ -166,7 +173,12 @@ export default function DelhiNCRHeatmap() {
                 </div>
                 {h.severe && (
                   <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 600, paddingLeft: 14, marginTop: 2 }}>
-                    High Alert Zone
+                    High Alert Zone · {h.case_count || 0} FIR{(h.case_count || 0) === 1 ? '' : 's'}
+                  </div>
+                )}
+                {!h.severe && (
+                  <div style={{ fontSize: 11, color: '#94a3b8', paddingLeft: 14, marginTop: 2 }}>
+                    {h.case_count || 0} FIR{(h.case_count || 0) === 1 ? '' : 's'} on record
                   </div>
                 )}
               </div>

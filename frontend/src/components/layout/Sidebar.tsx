@@ -89,6 +89,12 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/cases',      icon: Icons.cases,     label: 'Cases',            section: 'INVESTIGATION' },
   { path: '/evidence',   icon: Icons.evidence,  label: 'Evidence',         section: 'INVESTIGATION' },
   { path: '/findings',   icon: Icons.findings,  label: 'Findings',         section: 'INVESTIGATION' },
+  { path: '/complaint-ai', icon: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <path d="M3 2h7l3 3v9H3V2z" />
+      <path d="M10 2v3h3M5 8h6M5 11h4" strokeLinecap="round" />
+    </svg>
+  ), label: 'Complaint AI', section: 'ANALYSIS' },
   { path: '/osint',      icon: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <circle cx="8" cy="8" r="6" />

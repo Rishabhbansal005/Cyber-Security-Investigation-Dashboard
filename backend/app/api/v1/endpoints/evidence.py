@@ -8,6 +8,7 @@ from app.core.supabase_client import get_supabase_admin
 from app.core.config import settings
 from app.models.schemas import EvidenceResponse, EvidenceUpdate, MessageResponse
 from app.services.forensics.hash_service import compute_hashes_from_url
+from app.services.audit_log import write_officer_audit
 import logging
 import json
 
@@ -130,6 +131,14 @@ async def upload_evidence(
             raise HTTPException(status_code=500, detail="Failed to save evidence record")
 
         ev_record = result.data[0]
+        write_officer_audit(
+            db,
+            action="UPLOAD_EVIDENCE",
+            target=f"{file.filename} ({ev_record.get('evidence_number', '')})",
+            officer_id=current_user.id,
+            officer_email=current_user.email,
+            status="logged",
+        )
 
         # Auto-generate timeline event
         timeline_payload = {

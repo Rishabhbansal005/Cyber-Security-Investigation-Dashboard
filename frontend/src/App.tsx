@@ -49,6 +49,7 @@ import ReportDetail from '@/pages/reports/ReportDetail';
 
 // Audit Logs module
 import AuditLogs from '@/pages/audit/AuditLogs';
+import ComplaintIntelligence from '@/pages/intelligence/ComplaintIntelligence';
 
 // React Query client
 const queryClient = new QueryClient({
@@ -88,6 +89,7 @@ function App() {
                 <Route path="/evidence/:id" element={<EvidenceDetail />} />
 
                 {/* OSINT & Threat Intel */}
+                <Route path="/complaint-ai" element={<ComplaintIntelligence />} />
                 <Route path="/osint" element={<OsintDashboard />} />
                 <Route path="/threat-intelligence" element={<LiveThreatIntelligence />} />
                 <Route path="/threat-intelligence/investigate" element={<ThreatInvestigate />} />

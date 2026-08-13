@@ -251,6 +251,12 @@ export default function CaseDetail() {
                       </h6>
                       {[
                         { label: 'Case Number', value: c.case_number, mono: true },
+                        { label: 'FIR Number', value: c.fir_number ?? '—' },
+                        { label: 'NCRP / 1930 ID', value: c.ncrp_complaint_id ?? '—' },
+                        { label: 'Police Station', value: c.police_station ?? '—' },
+                        { label: 'Complainant', value: c.complainant_name ?? '—' },
+                        { label: 'Sections', value: (c.sections_of_law && c.sections_of_law.length) ? c.sections_of_law.join(', ') : '—' },
+                        { label: 'Funds Frozen (INR)', value: c.funds_frozen_inr ? `₹ ${Number(c.funds_frozen_inr).toLocaleString('en-IN')}` : '—' },
                         { label: 'Status', value: <StatusBadge status={c.status} /> },
                         { label: 'Priority', value: <PriorityBadge priority={c.priority} /> },
                         { label: 'Category', value: c.category?.replace('_', ' ') ?? '—' },

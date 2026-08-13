@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.security import get_current_user, require_investigator, CurrentUser
 from app.core.supabase_client import get_supabase_admin
 from app.models.schemas import SuspectCreate, SuspectUpdate, SuspectResponse, MessageResponse
+from app.services.audit_log import write_officer_audit
 
 router = APIRouter(prefix="/suspects", tags=["Suspects"])
 logger = logging.getLogger(__name__)
@@ -19,12 +20,27 @@ async def create_suspect(
         
         payload = suspect_in.model_dump()
         payload["created_by"] = current_user.id
-        
-        result = db.table("suspects").insert(payload).execute()
+
+        try:
+            result = db.table("suspects").insert(payload).execute()
+        except Exception as insert_err:
+            logger.warning("Suspect insert with ops fields failed, retrying core columns: %s", insert_err)
+            payload.pop("status", None)
+            payload.pop("funds_linked_inr", None)
+            result = db.table("suspects").insert(payload).execute()
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create suspect")
-            
-        return result.data[0]
+
+        created = result.data[0]
+        write_officer_audit(
+            db,
+            action="ADD_SUSPECT",
+            target=created.get("name"),
+            officer_id=current_user.id,
+            officer_email=current_user.email,
+            status="logged",
+        )
+        return created
     except Exception as e:
         logger.error(f"Error creating suspect: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -80,7 +96,17 @@ async def update_suspect(
         result = db.table("suspects").update(payload).eq("id", suspect_id).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="Suspect not found")
-        return result.data[0]
+        updated = result.data[0]
+        if payload.get("status") == "arrested":
+            write_officer_audit(
+                db,
+                action="MARK_ARRESTED",
+                target=updated.get("name"),
+                officer_id=current_user.id,
+                officer_email=current_user.email,
+                status="logged",
+            )
+        return updated
     except HTTPException:
         raise
     except Exception as e:

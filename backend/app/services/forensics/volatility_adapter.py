@@ -81,42 +81,9 @@ class VolatilityAdapter:
     async def analyze_memory(self, evidence_id: str, file_path: str, original_file_name: str) -> Dict[str, Any]:
         """
         Run basic volatility 3 plugins against a memory dump.
-        If original_file_name starts with 'mock', returns fake test data.
         """
         if 'mock' in original_file_name.lower():
-            import time
-            time.sleep(2)
-            return {
-                "profile": "Windows 10 x64 (Mock)",
-                "process_list": [
-                    {"PID": 4, "ImageFileName": "System", "PPID": 0, "Threads": 120, "Handles": 1500, "CreateTime": "2026-06-09 08:00:00"},
-                    {"PID": 1200, "ImageFileName": "explorer.exe", "PPID": 1050, "Threads": 45, "Handles": 800, "CreateTime": "2026-06-09 08:05:12"},
-                    {"PID": 3456, "ImageFileName": "svchost.exe", "PPID": 450, "Threads": 12, "Handles": 300, "CreateTime": "2026-06-09 08:05:15"},
-                    {"PID": 6666, "ImageFileName": "evil_trojan.exe", "PPID": 1200, "Threads": 5, "Handles": 150, "CreateTime": "2026-06-09 09:30:45"}
-                ],
-                "process_tree": [
-                    {"PID": 4, "ImageFileName": "System", "Children": []},
-                    {"PID": 1050, "ImageFileName": "wininit.exe", "Children": [
-                        {"PID": 1200, "ImageFileName": "explorer.exe", "Children": [
-                            {"PID": 6666, "ImageFileName": "evil_trojan.exe", "Children": []}
-                        ]}
-                    ]}
-                ],
-                "suspicious_processes": [
-                    {
-                        "PID": 6666, 
-                        "Process": "evil_trojan.exe", 
-                        "Start VPN": "0x12345678",
-                        "Protection": "PAGE_EXECUTE_READWRITE",
-                        "Hexdump": "4d 5a 90 00 03 00 00 00  MZ......"
-                    }
-                ],
-                "analysis_summary": {
-                    "total_processes": 4,
-                    "suspicious_processes_count": 1,
-                    "malfind_hits": 1
-                }
-            }
+            raise ValueError("Mock memory dumps are not analyzed. Upload a real memory image.")
 
         logger.info(f"Starting memory analysis for {file_path}")
         

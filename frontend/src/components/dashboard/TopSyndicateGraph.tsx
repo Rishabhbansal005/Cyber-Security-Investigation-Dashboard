@@ -67,7 +67,9 @@ export default function TopSyndicateGraph() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-top-syndicate'],
     queryFn: () => dashboardApi.getTopSyndicate(),
-    refetchInterval: 30000,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const initialNodes = useMemo(() => {

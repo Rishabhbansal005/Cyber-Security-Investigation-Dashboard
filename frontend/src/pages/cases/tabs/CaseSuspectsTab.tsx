@@ -16,7 +16,9 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
     ip_addresses: [],
     criminal_history: '',
     social_media_accounts: [],
-    notes: ''
+    notes: '',
+    status: 'under_investigation',
+    funds_linked_inr: 0,
   });
 
   const { data: suspects, isLoading } = useQuery({
@@ -42,7 +44,9 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
         ip_addresses: [],
         criminal_history: '',
         social_media_accounts: [],
-        notes: ''
+        notes: '',
+        status: 'under_investigation',
+        funds_linked_inr: 0,
       });
     }
   });
@@ -51,6 +55,14 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
     mutationFn: (id: string) => suspectsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suspects', caseId] });
+    }
+  });
+
+  const updateSuspectMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<SuspectCreate> }) => suspectsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suspects', caseId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     }
   });
 
@@ -112,6 +124,19 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
                   <label className="form-label">IP Addresses (comma separated)</label>
                   <input type="text" className="form-control" onChange={e => handleArrayInput(e, 'ip_addresses')} />
                 </div>
+                <div className="col-md-6">
+                  <label className="form-label">Status</label>
+                  <select className="form-select" value={formData.status || 'under_investigation'} onChange={e => setFormData({ ...formData, status: e.target.value as SuspectCreate['status'] })}>
+                    <option value="under_investigation">Under investigation</option>
+                    <option value="arrested">Arrested</option>
+                    <option value="absconding">Absconding</option>
+                    <option value="discharged">Discharged</option>
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Linked freeze amount (INR)</label>
+                  <input type="number" min="0" className="form-control" value={formData.funds_linked_inr || 0} onChange={e => setFormData({ ...formData, funds_linked_inr: Number(e.target.value) })} />
+                </div>
                 <div className="col-md-12">
                   <label className="form-label">Criminal History</label>
                   <textarea className="form-control" rows={3} value={formData.criminal_history} onChange={e => setFormData({ ...formData, criminal_history: e.target.value })}></textarea>
@@ -141,9 +166,22 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
               <div className="card h-100">
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px', marginBottom: '16px' }}>
                   <h5 style={{ margin: 0, fontWeight: 700, color: 'var(--text-heading)', fontSize: '16px' }}>{suspect.name}</h5>
-                  <button className="btn btn-sm btn-outline-danger" style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600 }} onClick={() => {
-                    if (confirm('Delete this suspect?')) deleteMutation.mutate(suspect.id);
-                  }}>Delete Suspect</button>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <select
+                      className="form-select form-select-sm"
+                      value={suspect.status || 'under_investigation'}
+                      onChange={(e) => updateSuspectMutation.mutate({ id: suspect.id, data: { status: e.target.value as SuspectCreate['status'] } })}
+                      style={{ fontSize: 12, width: 180 }}
+                    >
+                      <option value="under_investigation">Under investigation</option>
+                      <option value="arrested">Arrested</option>
+                      <option value="absconding">Absconding</option>
+                      <option value="discharged">Discharged</option>
+                    </select>
+                    <button className="btn btn-sm btn-outline-danger" style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600 }} onClick={() => {
+                      if (confirm('Delete this suspect?')) deleteMutation.mutate(suspect.id);
+                    }}>Delete Suspect</button>
+                  </div>
                 </div>
                 <div className="card-body">
                   <div className="row g-4">
@@ -151,7 +189,8 @@ export default function CaseSuspectsTab({ caseId }: { caseId: string }) {
                       { label: 'Aliases', value: suspect.aliases?.length ? suspect.aliases.join(', ') : 'None' },
                       { label: 'Mobiles', value: suspect.mobile_numbers?.length ? suspect.mobile_numbers.join(', ') : 'None' },
                       { label: 'Emails', value: suspect.email_ids?.length ? suspect.email_ids.join(', ') : 'None' },
-                      { label: 'IP Addresses', value: suspect.ip_addresses?.length ? suspect.ip_addresses.join(', ') : 'None' }
+                      { label: 'IP Addresses', value: suspect.ip_addresses?.length ? suspect.ip_addresses.join(', ') : 'None' },
+                      { label: 'Linked freeze (INR)', value: suspect.funds_linked_inr ? `₹ ${Number(suspect.funds_linked_inr).toLocaleString('en-IN')}` : 'None' },
                     ].map((item, idx) => (
                       <div key={idx} className="col-6">
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{item.label}</div>

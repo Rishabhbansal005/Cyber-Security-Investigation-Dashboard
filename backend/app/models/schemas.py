@@ -58,6 +58,12 @@ class CaseBase(BaseModel):
     jurisdiction: Optional[str] = None
     assigned_to: Optional[str] = None
     tags: List[str] = []
+    fir_number: Optional[str] = None
+    police_station: Optional[str] = None
+    ncrp_complaint_id: Optional[str] = None
+    complainant_name: Optional[str] = None
+    sections_of_law: List[str] = []
+    funds_frozen_inr: float = 0
 
 
 class CaseCreate(CaseBase):
@@ -74,6 +80,12 @@ class CaseUpdate(BaseModel):
     jurisdiction: Optional[str] = None
     assigned_to: Optional[str] = None
     tags: Optional[List[str]] = None
+    fir_number: Optional[str] = None
+    police_station: Optional[str] = None
+    ncrp_complaint_id: Optional[str] = None
+    complainant_name: Optional[str] = None
+    sections_of_law: Optional[List[str]] = None
+    funds_frozen_inr: Optional[float] = None
 
 
 class CaseResponse(CaseBase, TimestampMixin):
@@ -422,6 +434,8 @@ class SuspectBase(BaseModel):
     criminal_history: Optional[str] = None
     social_media_accounts: List[Dict[str, Any]] = []
     notes: Optional[str] = None
+    status: str = "under_investigation"
+    funds_linked_inr: float = 0
 
 class SuspectCreate(SuspectBase):
     case_id: str
@@ -435,6 +449,8 @@ class SuspectUpdate(BaseModel):
     criminal_history: Optional[str] = None
     social_media_accounts: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
+    status: Optional[str] = None
+    funds_linked_inr: Optional[float] = None
 
 class SuspectResponse(SuspectBase, TimestampMixin):
     id: str
@@ -466,6 +482,7 @@ class DashboardStats(BaseModel):
     recent_activity: List[Dict[str, Any]] = []
     priority_distribution: List[Dict[str, Any]] = []
     trend_data: List[Dict[str, Any]] = []
+    broadcast_alert: str = ""
 
 class Hotspot(BaseModel):
     id: int
@@ -474,6 +491,7 @@ class Hotspot(BaseModel):
     top: float
     severe: bool
     city: str
+    case_count: int = 0
 
 
 # ============================================================
