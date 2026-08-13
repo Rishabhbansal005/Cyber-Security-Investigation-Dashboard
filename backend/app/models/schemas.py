@@ -462,6 +462,7 @@ class DashboardStats(BaseModel):
     funds_frozen: float = 0.0
     suspects_tracked: int = 0
     gangs_identified: int = 0
+    arrests_made: int = 0
     recent_activity: List[Dict[str, Any]] = []
     priority_distribution: List[Dict[str, Any]] = []
     trend_data: List[Dict[str, Any]] = []

@@ -306,6 +306,7 @@ export interface DashboardStats {
   funds_frozen: number;
   suspects_tracked: number;
   gangs_identified: number;
+  arrests_made: number;
   recent_activity: ActivityItem[];
   priority_distribution: { name: string; value: number }[];
   trend_data: Array<{

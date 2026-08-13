@@ -109,14 +109,17 @@ async def get_dashboard_stats(
         correlations = correlations_res.data or []
         total_correlations = len(correlations)
         critical_correlations = sum(1 for c in correlations if c.get("correlation_severity") == "critical")
-        gangs_identified = critical_correlations
+        gangs_identified = 0
 
         # 4.6 Fetch Suspects
         suspects_res = db.table("suspects").select("id", count="exact").execute()
         suspects_tracked = suspects_res.count if hasattr(suspects_res, "count") and suspects_res.count is not None else len(suspects_res.data or [])
 
-        # 4.7 Calculate Funds Frozen (Estimate based on closed/active cases)
-        funds_frozen = round((closed_cases * 0.15) + (active_cases * 0.05), 2)
+        # 4.7 Calculate Funds Frozen (Actual calculation would go here)
+        funds_frozen = 0.0
+        
+        # 4.8 Calculate Arrests Made
+        arrests_made = 0
 
         # 5. Fetch recent activity (Global Timeline)
         activity_res = db.table("timeline_events").select("*").order("event_time", desc=True).limit(10).execute()
@@ -136,6 +139,7 @@ async def get_dashboard_stats(
             funds_frozen=funds_frozen,
             suspects_tracked=suspects_tracked,
             gangs_identified=gangs_identified,
+            arrests_made=arrests_made,
             recent_activity=recent_activity,
             priority_distribution=priority_distribution,
             trend_data=trend_data
@@ -199,4 +203,29 @@ async def get_dashboard_hotspots(
         
     except Exception as e:
         logger.error(f"Dashboard hotspots error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/top-syndicate")
+async def get_top_syndicate(
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    try:
+        db = get_supabase_admin()
+        res = db.table("attack_chains").select("*").execute()
+        chains = res.data or []
+        
+        if not chains:
+            return {"nodes": [], "edges": []}
+            
+        # Find the chain with the most nodes
+        largest_chain = max(chains, key=lambda c: len(c.get("nodes", [])))
+        
+        return {
+            "title": largest_chain.get("title", "Top Priority Syndicate"),
+            "severity": largest_chain.get("severity", "critical"),
+            "nodes": largest_chain.get("nodes", []),
+            "edges": largest_chain.get("edges", [])
+        }
+    except Exception as e:
+        logger.error(f"Dashboard top-syndicate error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
