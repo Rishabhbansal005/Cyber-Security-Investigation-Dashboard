@@ -11,7 +11,8 @@ import { StatusBadge, PriorityBadge } from '@/components/shared/Badges';
 import type { Case } from '@/types';
 import dashboardApi from '@/api/dashboard';
 import DelhiNCRHeatmap from '@/components/dashboard/DelhiNCRHeatmap';
-import MiniNetworkGraph from '@/components/dashboard/MiniNetworkGraph';
+import TopSyndicateGraph from '@/components/dashboard/TopSyndicateGraph';
+import CyberNewsMarquee from '@/components/dashboard/CyberNewsMarquee';
 import casesApi from '@/api/cases';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -566,8 +567,6 @@ const STAT_CARDS = [
     icon: I.money,
     color: '#10b981',
     colorMuted: 'rgba(16,185,129,0.12)',
-    isCustom: true,
-    customValue: '₹ 2.4 Cr'
   },
   {
     id: 'active_cases',
@@ -575,8 +574,6 @@ const STAT_CARDS = [
     icon: I.active,
     color: '#f59e0b',
     colorMuted: 'rgba(245,158,11,0.12)',
-    isCustom: true,
-    customValue: '5'
   },
   {
     id: 'closed_cases',
@@ -584,8 +581,6 @@ const STAT_CARDS = [
     icon: I.closed,
     color: '#22d3ee',
     colorMuted: 'rgba(34,211,238,0.10)',
-    isCustom: true,
-    customValue: '14'
   },
 ];
 
@@ -596,8 +591,6 @@ const SEC_STATS = [
     icon: I.suspects,
     color: '#a78bfa',
     colorMuted: 'rgba(167,139,250,0.12)',
-    isCustom: true,
-    customValue: '128'
   },
   {
     id: 'critical_correlations',
@@ -605,8 +598,6 @@ const SEC_STATS = [
     icon: I.attack,
     color: '#f43f5e',
     colorMuted: 'rgba(244,63,94,0.12)',
-    isCustom: true,
-    customValue: '3'
   },
   {
     id: 'total_evidence',
@@ -621,29 +612,37 @@ const SEC_STATS = [
     icon: I.tracker,
     color: '#10b981',
     colorMuted: 'rgba(16,185,129,0.12)',
-    isCustom: true,
-    customValue: '47'
   },
 ];
 
-const BROADCAST_ALERTS = [
-  "Urgent: Surge in malicious APK downloads targeting SBI users in Delhi NCR. Freeze associated UPI handles immediately.",
-  "Alert: High-volume crypto laundering detected via Binance. Coordinate with Cyber Cell Node 4.",
-  "Warning: Ransomware payload identified in municipal networks. Isolate affected subnets.",
-  "Intel: New deepfake extortion ring operating from border regions. Escalate to specialized cyber forensics unit."
-];
+// Dynamic broadcast alerts are fetched live from GNews API
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [globalSearch, setGlobalSearch] = useState('');
-  
-  const [activeAlert] = useState(() => {
-    return BROADCAST_ALERTS[Math.floor(Math.random() * BROADCAST_ALERTS.length)];
-  });
 
-  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [activeAlert, setActiveAlert] = useState<string>("Loading live intelligence feed...");
+
+  useEffect(() => {
+    const apikey = '500c7be6c81095bc9e063ccd3c634b44';
+    const apiUrl = `https://gnews.io/api/v4/search?q=cybercrime&country=in&lang=en&apikey=${apikey}`;
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.articles && data.articles.length > 0) {
+          setActiveAlert(`${data.articles[0].title}`);
+        } else {
+          setActiveAlert("Monitoring live intelligence feeds. No new critical alerts.");
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching alert", err);
+        setActiveAlert("Monitoring live intelligence feeds. Connection to live stream interrupted.");
+      });
+  }, []);
+
 
   const handleGlobalSearch = () => {
     const q = globalSearch.trim();
@@ -699,10 +698,10 @@ export default function Dashboard() {
           boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 0 10px rgba(99,102,241,0.05)',
         }}>
           <Search color="#818cf8" size={20} style={{ marginRight: 16 }} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="global-police-search"
-            placeholder="Global Police Search: Enter Phone Number, UPI ID, Bank A/C, or FIR Number..." 
+            placeholder="Global Police Search: Enter Phone Number, UPI ID, Bank A/C, or FIR Number..."
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleGlobalSearch(); }}
@@ -714,8 +713,8 @@ export default function Dashboard() {
           <button
             id="btn-global-search-enter"
             onClick={handleGlobalSearch}
-            style={{ 
-              fontSize: 10, background: 'rgba(99,102,241,0.2)', color: '#818cf8', 
+            style={{
+              fontSize: 10, background: 'rgba(99,102,241,0.2)', color: '#818cf8',
               padding: '4px 8px', borderRadius: 4, fontWeight: 'bold',
               border: '1px solid rgba(99,102,241,0.4)', cursor: 'pointer',
               transition: 'background 0.15s'
@@ -729,20 +728,18 @@ export default function Dashboard() {
       </div>
 
       {/* ── Urgent Officer Alerts ────────────────────────────── */}
-      <div 
-        onClick={() => setShowAlertModal(true)}
+      <div
         style={{
-        background: 'linear-gradient(90deg, rgba(225,29,72,0.15) 0%, rgba(159,18,57,0.05) 100%)',
-        borderLeft: '4px solid #e11d48',
-        cursor: 'pointer',
-        padding: '12px 16px',
-        borderRadius: '0 8px 8px 0',
-        marginBottom: 24,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        animation: 'pulse-bg 2s infinite'
-      }}>
+          background: 'linear-gradient(90deg, rgba(225,29,72,0.15) 0%, rgba(159,18,57,0.05) 100%)',
+          borderLeft: '4px solid #e11d48',
+          padding: '12px 16px',
+          borderRadius: '0 8px 8px 0',
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          animation: 'pulse-bg 2s infinite'
+        }}>
         <style>{`
           @keyframes pulse-bg {
             0% { background-color: rgba(225,29,72,0.15); }
@@ -750,8 +747,17 @@ export default function Dashboard() {
             100% { background-color: rgba(225,29,72,0.15); }
           }
         `}</style>
-        <AlertTriangle color="#f43f5e" size={20} className="animate-pulse" />
-        <div style={{ color: '#fecdd3', fontSize: 13, fontWeight: 500 }}>
+        <AlertTriangle color="#f43f5e" size={20} className="animate-pulse" style={{ flexShrink: 0 }} />
+        <div style={{ 
+          color: '#fecdd3', 
+          fontSize: 13, 
+          fontWeight: 500,
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
           <span style={{ fontWeight: 700, color: '#f43f5e', marginRight: 8 }}>BROADCAST:</span>
           {activeAlert}
         </div>
@@ -761,25 +767,22 @@ export default function Dashboard() {
       <HelplineMarquee />
       <GovPortalsMarquee />
       <PoliceLocationsMarquee />
+      <CyberNewsMarquee />
 
       {/* ── Combined KPI Grid ──────────────────────────────── */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-        gap: '16px', 
-        marginBottom: '24px' 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '16px',
+        marginBottom: '24px'
       }}>
         {[...STAT_CARDS, ...SEC_STATS].map((s) => {
           let finalValue: string | number = 0;
           if (isLoading) {
             finalValue = '—';
           } else {
-            const apiVal = (stats as any)?.[s.id];
-            if (apiVal != null && apiVal !== 0) {
-              finalValue = s.id === 'funds_frozen' ? `₹ ${apiVal} Cr` : apiVal;
-            } else if (s.isCustom) {
-              finalValue = s.customValue as string | number;
-            }
+            const apiVal = (stats as any)?.[s.id] || 0;
+            finalValue = s.id === 'funds_frozen' ? `₹ ${apiVal} Cr` : apiVal;
           }
           return (
             <StatCard
@@ -819,7 +822,7 @@ export default function Dashboard() {
               </span>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
-              <MiniNetworkGraph />
+              <TopSyndicateGraph />
             </div>
           </div>
         </div>
@@ -1034,46 +1037,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Alert Intelligence Modal */}
-      {showAlertModal && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{
-            background: '#0f172a', border: '1px solid #e11d48',
-            borderRadius: 12, padding: 24, maxWidth: 600, width: '90%',
-            boxShadow: '0 10px 40px rgba(225,29,72,0.2)'
-          }}>
-            <h2 style={{ color: '#f43f5e', marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <AlertTriangle /> Urgent Intelligence Brief
-            </h2>
-            <p style={{ color: '#e2e8f0', fontSize: 16, lineHeight: 1.5 }}>
-              {activeAlert}
-            </p>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 8, marginTop: 20 }}>
-              <h4 style={{ color: '#94a3b8', margin: '0 0 8px 0' }}>Recommended Actions:</h4>
-              <ul style={{ color: '#cbd5e1', margin: 0, paddingLeft: 20, fontSize: 14 }}>
-                <li style={{ marginBottom: 6 }}>Immediately dispatch alerts to all state nodal officers.</li>
-                <li style={{ marginBottom: 6 }}>Coordinate with CERT-In for technical teardown of the IOCs.</li>
-                <li>Initiate emergency freeze protocol under Section 91 CrPC.</li>
-              </ul>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
-              <button 
-                onClick={() => setShowAlertModal(false)}
-                style={{
-                  background: '#e11d48', color: 'white', border: 'none',
-                  padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold'
-                }}
-              >
-                Acknowledge & Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -10,6 +10,10 @@ const dashboardApi = {
     const response = await apiClient.get<Hotspot[]>('/dashboard/hotspots');
     return response.data;
   },
+  getTopSyndicate: async () => {
+    const response = await apiClient.get<any>('/dashboard/top-syndicate');
+    return response.data;
+  },
 };
 
 export default dashboardApi;

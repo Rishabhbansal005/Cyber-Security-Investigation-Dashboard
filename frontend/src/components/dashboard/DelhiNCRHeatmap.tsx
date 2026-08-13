@@ -2,15 +2,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dashboardApi from '@/api/dashboard';
 
-const CITY_COLORS: Record<string, string> = {
-  Delhi:      '#ef4444',
-  Noida:      '#f97316',
-  Gurugram:   '#a855f7',
-  Ghaziabad:  '#3b82f6',
-  Meerut:     '#06b6d4',
-  Faridabad:  '#eab308',
-};
-
 const CITY_LABELS = ['All', 'Delhi', 'Noida', 'Gurugram', 'Ghaziabad', 'Meerut', 'Faridabad'];
 
 export default function DelhiNCRHeatmap() {
@@ -32,190 +23,188 @@ export default function DelhiNCRHeatmap() {
   const totalCount  = visible.length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* City Filter Tabs */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {CITY_LABELS.map(city => (
-          <button
-            key={city}
-            onClick={() => setActiveCity(city)}
-            style={{
-              padding: '3px 10px',
-              fontSize: 11,
-              fontWeight: 600,
-              borderRadius: 20,
-              border: `1px solid ${activeCity === city
-                ? (CITY_COLORS[city] || '#6366f1')
-                : 'rgba(255,255,255,0.1)'}`,
-              background: activeCity === city
-                ? `${CITY_COLORS[city] || '#6366f1'}22`
-                : 'transparent',
-              color: activeCity === city
-                ? (CITY_COLORS[city] || '#6366f1')
-                : '#94a3b8',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-          >
-            {city}
-          </button>
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* City Filter Tabs - Clean Version */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {CITY_LABELS.map(city => {
+          const isActive = activeCity === city;
+          return (
+            <button
+              key={city}
+              onClick={() => setActiveCity(city)}
+              style={{
+                padding: '4px 12px',
+                fontSize: 12,
+                fontWeight: 500,
+                borderRadius: 4,
+                border: '1px solid',
+                borderColor: isActive ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.05)',
+                background: isActive ? 'rgba(59,130,246,0.1)' : 'transparent',
+                color: isActive ? '#60a5fa' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {city}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Map Canvas */}
+      {/* Map Canvas - Clean Version */}
       <div style={{
-        position: 'relative', width: '100%', height: '300px',
-        background: '#080d17', borderRadius: 8, overflow: 'hidden',
+        position: 'relative', width: '100%', height: '320px',
+        background: '#0b1120', borderRadius: 12, overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.05)',
       }}>
         <style>{`
-          @keyframes pulse-ring {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: scale(2.5); opacity: 0; }
+          @keyframes subtle-pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            50% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
           }
-          @keyframes pulse-dot {
-            0% { transform: scale(0.9); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(0.9); }
-          }
-          .hs-dot {
+          .dot-base {
             position: absolute;
-            width: 10px; height: 10px;
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            animation: pulse-dot 2s infinite ease-in-out;
+            transition: all 0.2s ease;
             cursor: pointer;
-            z-index: 5;
+            z-index: 10;
           }
-          .hs-dot.severe { width: 13px; height: 13px; animation-duration: 1.2s; }
-          .hs-ring {
+          .dot-normal {
+            width: 8px; height: 8px;
+            background: #3b82f6;
+            box-shadow: 0 0 10px rgba(59,130,246,0.5);
+          }
+          .dot-severe {
+            width: 12px; height: 12px;
+            background: #ef4444;
+            box-shadow: 0 0 15px rgba(239,68,68,0.8);
+          }
+          .dot-pulse {
             position: absolute;
             border-radius: 50%;
-            transform: translate(-50%, -50%) scale(0.5);
-            animation: pulse-ring 3s infinite cubic-bezier(0.215,0.61,0.355,1);
+            background: rgba(239,68,68,0.4);
+            width: 12px; height: 12px;
+            animation: subtle-pulse 2s infinite ease-out;
             pointer-events: none;
-            z-index: 4;
+            z-index: 9;
           }
-          .hs-ring.severe { animation-duration: 1.5s; }
-          .map-tooltip {
+          .clean-tooltip {
             position: absolute;
-            background: rgba(10,15,30,0.95);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 5px 10px; border-radius: 6px;
-            font-size: 11px; font-weight: 600;
-            color: #f8fafc; white-space: nowrap;
-            pointer-events: none; z-index: 20;
-            transform: translate(-50%, -130%);
+            background: rgba(15,23,42,0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #f1f5f9;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 20;
+            transform: translate(-50%, -140%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
           }
-          .grid-bg {
-            position: absolute; inset: 0;
-            background-image:
-              linear-gradient(rgba(34,211,238,0.05) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(34,211,238,0.05) 1px, transparent 1px);
-            background-size: 20px 20px; opacity: 0.5;
+          .bg-dots {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
           }
         `}</style>
 
-        {/* Grid */}
-        <div className="grid-bg" />
+        {/* Minimalist Background Pattern */}
+        <div className="bg-dots" />
 
-        {/* SVG roads */}
-        <svg width="100%" height="100%" style={{ position: 'absolute', opacity: 0.12 }}>
-          <path d="M 0,80 Q 200,100 350,160 T 700,120"         fill="none" stroke="#22d3ee" strokeWidth="1.5"/>
-          <path d="M 0,180 Q 250,160 500,200 T 900,160"        fill="none" stroke="#22d3ee" strokeWidth="1.5"/>
-          <path d="M 150,0 Q 170,150 100,300"                  fill="none" stroke="#22d3ee" strokeWidth="1.5"/>
-          <path d="M 380,0 Q 400,150 360,300"                  fill="none" stroke="#22d3ee" strokeWidth="1.5"/>
-          <path d="M 600,0 Q 580,150 640,300"                  fill="none" stroke="#22d3ee" strokeWidth="1.5"/>
-          <path d="M 50,0  Q 300,100 600,50  T 900,80"         fill="none" stroke="#6366f1" strokeWidth="1" opacity="0.5"/>
+        {/* Minimalist SVG Map Outlines (Very subtle) */}
+        <svg width="100%" height="100%" style={{ position: 'absolute', opacity: 0.1 }}>
+          <path d="M 0,80 Q 200,100 350,160 T 700,120"         fill="none" stroke="#64748b" strokeWidth="1"/>
+          <path d="M 0,180 Q 250,160 500,200 T 900,160"        fill="none" stroke="#64748b" strokeWidth="1"/>
+          <path d="M 150,0 Q 170,150 100,300"                  fill="none" stroke="#64748b" strokeWidth="1"/>
+          <path d="M 380,0 Q 400,150 360,300"                  fill="none" stroke="#64748b" strokeWidth="1"/>
+          <path d="M 600,0 Q 580,150 640,300"                  fill="none" stroke="#64748b" strokeWidth="1"/>
         </svg>
 
-        {/* Radial vignette */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 45% 50%, transparent 30%, #080d17 95%)' }} />
+        {/* Vignette */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 40%, #0b1120 100%)', pointerEvents: 'none' }} />
 
-        {/* Hotspot dots */}
-        {visible.map(h => {
-          const color = CITY_COLORS[h.city] || '#ef4444';
-          const ringSize = h.severe ? 48 : 36;
-          return (
-            <React.Fragment key={h.id}>
-              {/* Pulse ring */}
+        {/* Hotspot rendering */}
+        {visible.map(h => (
+          <React.Fragment key={h.id}>
+            {/* Severe pulsing ring */}
+            {h.severe && (
               <div
-                className={`hs-ring${h.severe ? ' severe' : ''}`}
-                style={{
-                  left: `${h.left}%`, top: `${h.top}%`,
-                  width: ringSize, height: ringSize,
-                  background: `${color}44`,
-                  marginLeft: -ringSize/2, marginTop: -ringSize/2,
-                }}
+                className="dot-pulse"
+                style={{ left: `${h.left}%`, top: `${h.top}%` }}
               />
-              {/* Dot */}
-              <div
-                className={`hs-dot${h.severe ? ' severe' : ''}`}
-                style={{
-                  left: `${h.left}%`, top: `${h.top}%`,
-                  background: color,
-                  boxShadow: `0 0 ${h.severe ? 14 : 8}px ${color}`,
-                }}
-                onMouseEnter={() => setHoveredId(h.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              />
-              {/* Label always visible (small) */}
-              <div style={{
-                position: 'absolute',
+            )}
+            
+            {/* Main Dot */}
+            <div
+              className={`dot-base ${h.severe ? 'dot-severe' : 'dot-normal'}`}
+              style={{
                 left: `${h.left}%`, top: `${h.top}%`,
-                transform: 'translate(-50%, 10px)',
-                fontSize: 9, fontWeight: 600,
-                color: '#94a3b8', whiteSpace: 'nowrap',
-                pointerEvents: 'none', zIndex: 6,
-                fontFamily: 'monospace',
-                textShadow: '0 0 6px #000',
-              }}>
-                {h.label}
-              </div>
-              {/* Hover tooltip */}
-              {hoveredId === h.id && (
-                <div className="map-tooltip" style={{ left: `${h.left}%`, top: `${h.top}%` }}>
-                  📍 {h.label} — {h.city}
-                  {h.severe && <span style={{ color: '#f87171', marginLeft: 6 }}>⚠ SEVERE</span>}
+                opacity: hoveredId && hoveredId !== h.id ? 0.3 : 1
+              }}
+              onMouseEnter={() => setHoveredId(h.id)}
+              onMouseLeave={() => setHoveredId(null)}
+            />
+
+            {/* Clean Hover Tooltip */}
+            {hoveredId === h.id && (
+              <div className="clean-tooltip" style={{ left: `${h.left}%`, top: `${h.top}%` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: h.severe ? '#ef4444' : '#3b82f6' }} />
+                  <span style={{ fontWeight: 600 }}>{h.label}</span>
                 </div>
-              )}
-            </React.Fragment>
-          );
-        })}
+                <div style={{ fontSize: 11, color: '#94a3b8', paddingLeft: 14 }}>
+                  {h.city} Jurisdiction
+                </div>
+                {h.severe && (
+                  <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 600, paddingLeft: 14, marginTop: 2 }}>
+                    High Alert Zone
+                  </div>
+                )}
+              </div>
+            )}
+          </React.Fragment>
+        ))}
 
-        {/* Stats Overlay */}
+        {/* Professional Legend/Overlay */}
         <div style={{
-          position: 'absolute', top: 10, right: 10,
-          background: 'rgba(15,23,42,0.85)', padding: '8px 12px',
-          borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+          position: 'absolute', bottom: 16, right: 16,
+          background: 'rgba(15,23,42,0.85)',
           backdropFilter: 'blur(8px)',
+          padding: '12px 16px',
+          borderRadius: 8,
+          border: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', animation: 'pulse-dot 1s infinite' }} />
-            <span style={{ fontSize: 9, color: '#f8fafc', fontWeight: 700, letterSpacing: '0.08em' }}>LIVE HOTSPOTS</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
+            <span style={{ fontSize: 12, color: '#94a3b8' }}>Total Zones</span>
+            <span style={{ fontSize: 13, color: '#f1f5f9', fontWeight: 600, fontFamily: 'monospace' }}>{totalCount}</span>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#ef4444', fontFamily: 'monospace', lineHeight: 1 }}>
-            {totalCount}
-          </div>
-          <div style={{ fontSize: 9, color: '#f87171', marginTop: 3 }}>
-            ⚠ {severeCount} Severe Zones
-          </div>
-        </div>
-
-        {/* City legend (bottom-left) */}
-        <div style={{
-          position: 'absolute', bottom: 10, left: 10,
-          display: 'flex', flexDirection: 'column', gap: 3,
-          background: 'rgba(10,15,30,0.8)', padding: '6px 10px',
-          borderRadius: 6, border: '1px solid rgba(255,255,255,0.07)',
-        }}>
-          {Object.entries(CITY_COLORS).map(([city, color]) => (
-            <div key={city} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 4px ${color}` }} />
-              <span style={{ fontSize: 9, color: '#94a3b8', fontWeight: 600 }}>{city}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>High Alert</span>
             </div>
-          ))}
+            <span style={{ fontSize: 13, color: '#ef4444', fontWeight: 600, fontFamily: 'monospace' }}>{severeCount}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} />
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>Standard</span>
+            </div>
+            <span style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, fontFamily: 'monospace' }}>{totalCount - severeCount}</span>
+          </div>
         </div>
       </div>
     </div>
