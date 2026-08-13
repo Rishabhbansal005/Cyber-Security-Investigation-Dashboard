@@ -178,6 +178,8 @@ export default function LiveThreatIntelligence() {
       }));
   }, [events]);
 
+  const topMalwareMax = Math.max(...topMalware.map(t => t.count), 1);
+
   const filteredEvents = useMemo(() => {
     let result = events;
     if (severityFilter !== 'all') {
