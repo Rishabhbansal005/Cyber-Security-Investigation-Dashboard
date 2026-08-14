@@ -8,18 +8,23 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Inject auth token if available — reads from localStorage to avoid Supabase session calls
-// that would throw with placeholder credentials and break the interceptor chain.
+let cachedToken: string | null = null;
+let cachedTokenAt = 0;
+
 apiClient.interceptors.request.use(async (config) => {
   try {
-    // Try to get a real Supabase session safely
-    const { supabase } = await import('@/lib/supabase');
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+    const now = Date.now();
+    if (!cachedToken || now - cachedTokenAt > 60000) {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      cachedToken = session?.access_token ?? null;
+      cachedTokenAt = now;
+    }
+    if (cachedToken) {
+      config.headers.Authorization = `Bearer ${cachedToken}`;
     }
   } catch {
-    // Supabase not configured — skip auth header. Backend AI endpoints are public.
+    // Supabase not configured
   }
   return config;
 });

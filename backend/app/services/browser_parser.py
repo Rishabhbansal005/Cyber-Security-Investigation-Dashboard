@@ -21,18 +21,19 @@ class BrowserParser:
             "bookmarks": []
         }
         
-        # Determine if we should mock (file doesn't exist or isn't sqlite)
         if not os.path.exists(file_path) or os.path.getsize(file_path) < 100:
-            logger.info("Using mock Chrome parsing for development")
-            return BrowserParser._mock_chrome_data()
+            logger.warning("Chrome history file missing or too small: %s", file_path)
+            result["error_message"] = "History file could not be read."
+            return result
             
         try:
             # Check if valid SQLite
             with open(file_path, 'rb') as f:
                 header = f.read(16)
                 if header != b'SQLite format 3\x00':
-                    logger.info("Not a valid SQLite file, using mock data")
-                    return BrowserParser._mock_chrome_data()
+                    logger.warning("Not a valid SQLite Chrome history file")
+                    result["error_message"] = "File is not a valid Chrome History database."
+                    return result
 
             conn = sqlite3.connect(file_path)
             conn.row_factory = sqlite3.Row
@@ -97,36 +98,5 @@ class BrowserParser:
             return result
         except Exception as e:
             logger.error(f"Error parsing Chrome History: {e}")
-            return BrowserParser._mock_chrome_data()
-
-    @staticmethod
-    def _mock_chrome_data() -> Dict[str, Any]:
-        """Return mock data for development bypass."""
-        return {
-            "browser_type": "chrome",
-            "history_entries": [
-                {"url": "https://google.com", "title": "Google", "visit_count": 42, "visit_time": datetime.utcnow().isoformat()},
-                {"url": "https://github.com", "title": "GitHub", "visit_count": 15, "visit_time": datetime.utcnow().isoformat()},
-                {"url": "http://evil-domain.onion/login", "title": "DarkWeb Market", "visit_count": 3, "visit_time": datetime.utcnow().isoformat()}
-            ],
-            "downloads": [
-                {"path": "C:\\Users\\Admin\\Downloads\\malware_payload.exe", "received_bytes": 1048576, "total_bytes": 1048576},
-                {"path": "C:\\Users\\Admin\\Downloads\\report.pdf", "received_bytes": 500000, "total_bytes": 500000}
-            ],
-            "cookies": [
-                {"domain": ".google.com", "name": "SESSION", "expires": "2027-01-01"},
-                {"domain": ".evil-domain.onion", "name": "auth_token", "expires": "2024-01-01"}
-            ],
-            "bookmarks": [
-                {"title": "Important Docs", "url": "https://docs.google.com"},
-                {"title": "C2 Server Panel", "url": "http://192.168.1.100:8080/admin"}
-            ],
-            "suspicious_urls": [
-                {"url": "http://evil-domain.onion/login", "reason": "Tor hidden service accessed", "severity": "critical"},
-                {"url": "http://192.168.1.100:8080/admin", "reason": "Suspicious local IP access", "severity": "medium"}
-            ],
-            "search_terms": [
-                {"engine": "Google", "term": "how to bypass windows defender", "time": datetime.utcnow().isoformat()},
-                {"engine": "Google", "term": "python reverse shell payload", "time": datetime.utcnow().isoformat()}
-            ]
-        }
+            result["error_message"] = str(e)
+            return result

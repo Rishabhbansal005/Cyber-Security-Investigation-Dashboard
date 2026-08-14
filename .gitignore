@@ -29,5 +29,6 @@ htmlcov/
 *.pkl
 # Large training data files
 backend/data/
+DataSets/
 # Scratch/temp scripts
 scratch/

@@ -2,19 +2,6 @@ import React, { createContext, useContext, useEffect, useState, useRef, ReactNod
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import type { User } from '@/types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-const MOCK_USER_ID = 'mock-user-1';
-const MOCK_EMAIL = 'mock@agency.gov';
-const MOCK_USER: User = {
-  id: MOCK_USER_ID,
-  email: MOCK_EMAIL,
-  full_name: 'Mock Analyst',
-  role: 'investigator',
-  created_at: new Date().toISOString(),
-} as User;
-
-const MOCK_SESSION = { user: { id: MOCK_USER_ID, email: MOCK_EMAIL } } as any as Session;
-
 // ─── Context Type ────────────────────────────────────────────────────────────
 interface AuthContextValue {
   session: Session | null;
@@ -87,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUser = async () => {
-    if (!supabaseUser || supabaseUser.id === MOCK_USER_ID) return;
+    if (!supabaseUser) return;
     try {
       const { supabase } = await import('@/lib/supabase');
       const { data } = await supabase

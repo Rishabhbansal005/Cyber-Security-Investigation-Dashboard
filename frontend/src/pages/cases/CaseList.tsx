@@ -59,7 +59,13 @@ export default function CaseList() {
     if (filters.search) {
       const q = filters.search.toLowerCase();
       result = result.filter(
-        (c) => c.title.toLowerCase().includes(q) || c.case_number?.toLowerCase().includes(q)
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.case_number?.toLowerCase().includes(q) ||
+          c.fir_number?.toLowerCase().includes(q) ||
+          c.ncrp_complaint_id?.toLowerCase().includes(q) ||
+          c.complainant_name?.toLowerCase().includes(q) ||
+          c.jurisdiction?.toLowerCase().includes(q)
       );
     }
     return result;

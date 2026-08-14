@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -317,19 +317,16 @@ function GovPortalsMarquee() {
 }
 
 const CYBER_POLICE_LOCATIONS = [
-  { name: 'IFSO Special Cell (Delhi)', address: 'Sector 16C, Dwarka, New Delhi', phone: '011-2088-2224', status: 'Online' },
-  { name: 'Cyber Police Station (New Delhi Dist)', address: 'Parliament Street, New Delhi', phone: '011-2336-1122', status: 'Online' },
-  { name: 'Cyber Police Station (South Dist)', address: 'Hauz Khas, New Delhi', phone: '011-2686-2244', status: 'Online' },
-  { name: 'Cyber Police Station (Rohini Dist)', address: 'Sector 22, Rohini, New Delhi', phone: '011-2758-3366', status: 'Online' },
-  { name: 'Cyber Police Station (North East Dist)', address: 'Seelampur, New Delhi', phone: '011-2282-4455', status: 'Online' },
-  { name: 'Cyber Crime Station (Gurugram)', address: 'Sector 43, Gurugram, Haryana', phone: '0124-222-2222', status: 'Online' },
-  { name: 'Cyber Crime Station (Noida)', address: 'Sector 36, Noida, UP', phone: '0120-234-5678', status: 'Online' },
-  { name: 'Cyber Crime Station (Ghaziabad)', address: 'Kavi Nagar, Ghaziabad, UP', phone: '0120-282-1234', status: 'Online' },
-  { name: 'Cyber Crime Cell (Faridabad)', address: 'Sector 21C, Faridabad, Haryana', phone: '0129-243-5678', status: 'Online' },
-  { name: 'National Cyber HQ', address: 'Block 4, CGO Complex, New Delhi', phone: '011-2436-1234', status: 'Online' },
-  { name: 'Cyber Crime Cell (Mumbai)', address: 'BKC, Bandra East, Mumbai', phone: '022-2650-4567', status: 'Online' },
-  { name: 'Cyber Station (Bengaluru)', address: 'Infantry Road, Bengaluru', phone: '080-2294-3232', status: 'Online' },
-  { name: 'Forensics Lab (Hyderabad)', address: 'Red Hills, Nampally, Hyderabad', phone: '040-2323-8899', status: 'Online' },
+  { name: 'IFSO Special Cell (Delhi)', address: 'Sector 16C, Dwarka, New Delhi' },
+  { name: 'Cyber Police Station (New Delhi Dist)', address: 'Parliament Street, New Delhi' },
+  { name: 'Cyber Police Station (South Dist)', address: 'Hauz Khas, New Delhi' },
+  { name: 'Cyber Police Station (Rohini Dist)', address: 'Sector 22, Rohini, New Delhi' },
+  { name: 'Cyber Police Station (North East Dist)', address: 'Seelampur, New Delhi' },
+  { name: 'Cyber Crime Station (Gurugram)', address: 'Sector 43, Gurugram, Haryana' },
+  { name: 'Cyber Crime Station (Noida)', address: 'Sector 36, Noida, UP' },
+  { name: 'Cyber Crime Station (Ghaziabad)', address: 'Kavi Nagar, Ghaziabad, UP' },
+  { name: 'Cyber Crime Cell (Faridabad)', address: 'Sector 21C, Faridabad, Haryana' },
+  { name: 'I4C / National Cybercrime Reporting', address: 'cybercrime.gov.in' },
 ];
 
 /* ─── Police Locations Marquee Component ───────────────────────────── */
@@ -448,7 +445,7 @@ function PoliceLocationsMarquee() {
                     {loc.name}
                   </span>
                   <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'Inter,sans-serif' }}>
-                    📍 {loc.address} <span style={{ color: '#818cf8', marginLeft: 4 }}>📞 {loc.phone.split(' (')[0]}</span>
+                    📍 {loc.address}
                   </span>
                 </div>
               </a>
@@ -577,7 +574,7 @@ const STAT_CARDS = [
   },
   {
     id: 'closed_cases',
-    label: 'Cases Solved Today',
+    label: 'Closed Cases',
     icon: I.closed,
     color: '#22d3ee',
     colorMuted: 'rgba(34,211,238,0.10)',
@@ -593,7 +590,7 @@ const SEC_STATS = [
     colorMuted: 'rgba(167,139,250,0.12)',
   },
   {
-    id: 'critical_correlations',
+    id: 'gangs_identified',
     label: 'Gangs Identified',
     icon: I.attack,
     color: '#f43f5e',
@@ -615,34 +612,13 @@ const SEC_STATS = [
   },
 ];
 
-// Dynamic broadcast alerts are fetched live from GNews API
+// Operational ticker is built from live FIRs and findings
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [globalSearch, setGlobalSearch] = useState('');
-
-  const [activeAlert, setActiveAlert] = useState<string>("Loading live intelligence feed...");
-
-  useEffect(() => {
-    const apikey = '500c7be6c81095bc9e063ccd3c634b44';
-    const apiUrl = `https://gnews.io/api/v4/search?q=cybercrime&country=in&lang=en&apikey=${apikey}`;
-    fetch(apiUrl)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.articles && data.articles.length > 0) {
-          setActiveAlert(`${data.articles[0].title}`);
-        } else {
-          setActiveAlert("Monitoring live intelligence feeds. No new critical alerts.");
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching alert", err);
-        setActiveAlert("Monitoring live intelligence feeds. Connection to live stream interrupted.");
-      });
-  }, []);
-
 
   const handleGlobalSearch = () => {
     const q = globalSearch.trim();
@@ -655,23 +631,39 @@ export default function Dashboard() {
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => dashboardApi.getStats(),
-    refetchInterval: 15000,
-    staleTime: 10000,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: recentCases = [], isLoading: isLoadingCases } = useQuery({
     queryKey: ['cases', 'recent'],
     queryFn: async () => {
-      const res = await casesApi.list();
+      const res = await casesApi.list({ page: 1, page_size: 5 });
       return res.items.slice(0, 5);
     },
-    refetchInterval: 15000,
-    staleTime: 10000,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
-  const isLoading = isLoadingStats || isLoadingCases;
+  const { data: toolStatus } = useQuery({
+    queryKey: ['forensic-tools'],
+    queryFn: () => dashboardApi.getForensicTools(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const isLoading = isLoadingStats;
   const priorityDist = stats?.priority_distribution || [];
   const trendData = stats?.trend_data || [];
+  const liveStatus = [
+    { label: 'Database / API', ok: !!stats },
+    ...(toolStatus?.tools || []).map((t) => ({
+      label: t.tool || t.name || 'Tool',
+      ok: !!t.available,
+    })),
+  ];
 
   return (
     <div className="animate-in">
@@ -759,7 +751,7 @@ export default function Dashboard() {
           whiteSpace: 'nowrap'
         }}>
           <span style={{ fontWeight: 700, color: '#f43f5e', marginRight: 8 }}>BROADCAST:</span>
-          {activeAlert}
+          {stats?.broadcast_alert || 'No operational alerts. Register FIRs to populate this feed.'}
         </div>
       </div>
 
@@ -781,8 +773,14 @@ export default function Dashboard() {
           if (isLoading) {
             finalValue = '—';
           } else {
-            const apiVal = (stats as any)?.[s.id] || 0;
-            finalValue = s.id === 'funds_frozen' ? `₹ ${apiVal} Cr` : apiVal;
+            const apiVal = Number((stats as any)?.[s.id] ?? 0);
+            if (s.id === 'funds_frozen') {
+              if (apiVal >= 1e7) finalValue = `₹ ${(apiVal / 1e7).toFixed(2)} Cr`;
+              else if (apiVal >= 1e5) finalValue = `₹ ${(apiVal / 1e5).toFixed(2)} L`;
+              else finalValue = `₹ ${apiVal.toLocaleString('en-IN')}`;
+            } else {
+              finalValue = apiVal;
+            }
           }
           return (
             <StatCard
@@ -951,7 +949,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <div style={{ padding: '0 4px' }}>
-              {isLoading ? (
+              {isLoadingCases ? (
                 <div style={{ padding: 20 }}>
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="skeleton" style={{ height: 44, marginBottom: 8, borderRadius: 6 }} />
@@ -1010,7 +1008,7 @@ export default function Dashboard() {
             <div className="card-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 22 }}>
                 {QUICK_ACTIONS.map((a) => (
-                  <Link key={a.path} to={a.path} className="quick-action-link">
+                  <Link key={a.label} to={a.path} className="quick-action-link">
                     <span className="quick-action-icon">{a.icon}</span>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{t(`dashboard.quick_actions.${a.label}`, a.label)}</div>
@@ -1021,7 +1019,7 @@ export default function Dashboard() {
               </div>
 
               <div className="section-heading">{t('dashboard.system_status.title', 'System Status')}</div>
-              {SYS_STATUS.map((s) => (
+              {liveStatus.map((s) => (
                 <div key={s.label} className="sys-status-row">
                   <span style={{ color: '#94a3b8', fontSize: 12.5 }}>{s.label}</span>
                   <span className={`sys-status-dot ${s.ok ? 'ok' : 'off'}`}>
@@ -1043,18 +1041,9 @@ export default function Dashboard() {
 
 const QUICK_ACTIONS = [
   { icon: I.newcase, label: 'New FIR Entry', desc: 'Open a new investigation', path: '/cases/new' },
-  { icon: I.tracker, label: 'IP / IMEI Tracker', desc: 'Trace location and device info', path: '/osint' },
-  { icon: I.bank, label: 'Freeze Bank A/C', desc: 'Generate Section 91 CrPC Notice', path: '/evidence' },
+  { icon: I.tracker, label: 'IP / IMEI Tracker', desc: 'OSINT lookup for phone, IP, or domain', path: '/osint' },
+  { icon: I.bank, label: 'Record Fund Freeze', desc: 'Enter frozen amount on the FIR after bank confirmation', path: '/cases' },
   { icon: I.social, label: 'Social Media Profiler', desc: 'Analyze suspect social footprint', path: '/osint' },
-];
-
-const SYS_STATUS = [
-  { label: 'Database', ok: true },
-  { label: 'Storage', ok: true },
-  { label: 'Volatility', ok: true },
-  { label: 'Wireshark', ok: true },
-  { label: 'Mobile Forensics', ok: true },
-  { label: 'SIEM & Logs', ok: true },
 ];
 
 function getTimeGreeting() {

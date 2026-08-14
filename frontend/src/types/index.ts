@@ -50,6 +50,12 @@ export interface Case {
   assignee?: Pick<User, 'id' | 'full_name' | 'email' | 'role'>;
   created_by: string;
   tags: string[];
+  fir_number?: string;
+  police_station?: string;
+  ncrp_complaint_id?: string;
+  complainant_name?: string;
+  sections_of_law?: string[];
+  funds_frozen_inr?: number;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +70,12 @@ export interface CaseCreate {
   jurisdiction?: string;
   assigned_to?: string;
   tags?: string[];
+  fir_number?: string;
+  police_station?: string;
+  ncrp_complaint_id?: string;
+  complainant_name?: string;
+  sections_of_law?: string[];
+  funds_frozen_inr?: number;
 }
 
 export interface CaseUpdate extends Partial<CaseCreate> {}
@@ -290,6 +302,7 @@ export interface Hotspot {
   top: number;
   severe: boolean;
   city: string;
+  case_count?: number;
 }
 
 export interface DashboardStats {
@@ -316,6 +329,7 @@ export interface DashboardStats {
     cases: number;
     closed: number;
   }>;
+  broadcast_alert?: string;
 }
 
 export interface ActivityItem {
@@ -541,6 +555,8 @@ export interface Suspect {
   criminal_history?: string;
   social_media_accounts: Record<string, any>[];
   notes?: string;
+  status?: 'under_investigation' | 'arrested' | 'absconding' | 'discharged';
+  funds_linked_inr?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -556,6 +572,8 @@ export interface SuspectCreate {
   criminal_history?: string;
   social_media_accounts?: Record<string, any>[];
   notes?: string;
+  status?: 'under_investigation' | 'arrested' | 'absconding' | 'discharged';
+  funds_linked_inr?: number;
 }
 
 export interface SuspectUpdate extends Partial<Omit<SuspectCreate, 'case_id'>> {}

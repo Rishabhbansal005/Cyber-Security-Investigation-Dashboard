@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthContext';
+import casesApi from '@/api/cases';
 import type { CasePriority, CaseCategory } from '@/types';
 
 const PRIORITIES: { value: CasePriority; label: string; color: string; desc: string }[] = [
@@ -28,7 +27,6 @@ const CATEGORIES: { value: CaseCategory; label: string }[] = [
 export default function NewCase() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { supabaseUser } = useAuth();
 
   const [form, setForm] = useState({
     title: '',
@@ -38,6 +36,12 @@ export default function NewCase() {
     category: '' as CaseCategory | '',
     jurisdiction: '',
     incident_date: '',
+    fir_number: '',
+    police_station: '',
+    ncrp_complaint_id: '',
+    complainant_name: '',
+    sections_of_law: '',
+    funds_frozen_inr: '',
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState('');
@@ -45,29 +49,30 @@ export default function NewCase() {
 
   const mutation = useMutation({
     mutationFn: async (formData: typeof form) => {
-      const { data, error } = await supabase
-        .from('cases')
-        .insert({
-          title: formData.title,
-          description: formData.description || null,
-          priority: formData.priority,
-          status: formData.status,
-          category: formData.category || null,
-          jurisdiction: formData.jurisdiction || null,
-          incident_date: formData.incident_date
-            ? new Date(formData.incident_date).toISOString()
-            : null,
-          tags: formData.tags,
-          created_by: supabaseUser?.id,
-          assigned_to: supabaseUser?.id,
-        })
-        .select('id')
-        .single();
-      if (error) throw new Error(error.message);
-      return data;
+      return casesApi.create({
+        title: formData.title,
+        description: formData.description || undefined,
+        priority: formData.priority,
+        status: formData.status,
+        category: formData.category || undefined,
+        jurisdiction: formData.jurisdiction || undefined,
+        incident_date: formData.incident_date
+          ? new Date(formData.incident_date).toISOString()
+          : undefined,
+        tags: formData.tags,
+        fir_number: formData.fir_number || undefined,
+        police_station: formData.police_station || undefined,
+        ncrp_complaint_id: formData.ncrp_complaint_id || undefined,
+        complainant_name: formData.complainant_name || undefined,
+        sections_of_law: formData.sections_of_law
+          ? formData.sections_of_law.split(',').map((s) => s.trim()).filter(Boolean)
+          : [],
+        funds_frozen_inr: formData.funds_frozen_inr ? Number(formData.funds_frozen_inr) : 0,
+      });
     },
     onSuccess: (newCase) => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       navigate(`/cases/${newCase.id}`);
     },
     onError: (err: unknown) => {
@@ -226,8 +231,65 @@ export default function NewCase() {
                 <input
                   id="case-jurisdiction" name="jurisdiction" type="text"
                   className="form-control"
-                  placeholder="e.g. Federal, State, International"
+                  placeholder="e.g. Delhi, Noida, Gurugram"
                   value={form.jurisdiction} onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="row g-3 mb-4">
+              <div className="col-6">
+                <label htmlFor="case-fir" className="form-label">FIR Number</label>
+                <input
+                  id="case-fir" name="fir_number" type="text"
+                  className="form-control"
+                  placeholder="e.g. FIR-DL-2026-102"
+                  value={form.fir_number} onChange={handleChange}
+                />
+              </div>
+              <div className="col-6">
+                <label htmlFor="case-ps" className="form-label">Police Station</label>
+                <input
+                  id="case-ps" name="police_station" type="text"
+                  className="form-control"
+                  placeholder="e.g. Cyber PS, Dwarka"
+                  value={form.police_station} onChange={handleChange}
+                />
+              </div>
+              <div className="col-6">
+                <label htmlFor="case-ncrp" className="form-label">NCRP / 1930 ID</label>
+                <input
+                  id="case-ncrp" name="ncrp_complaint_id" type="text"
+                  className="form-control"
+                  placeholder="National Cybercrime portal complaint ID"
+                  value={form.ncrp_complaint_id} onChange={handleChange}
+                />
+              </div>
+              <div className="col-6">
+                <label htmlFor="case-complainant" className="form-label">Complainant</label>
+                <input
+                  id="case-complainant" name="complainant_name" type="text"
+                  className="form-control"
+                  placeholder="Complainant name"
+                  value={form.complainant_name} onChange={handleChange}
+                />
+              </div>
+              <div className="col-6">
+                <label htmlFor="case-sections" className="form-label">Sections of law</label>
+                <input
+                  id="case-sections" name="sections_of_law" type="text"
+                  className="form-control"
+                  placeholder="e.g. 66C IT Act, 318 BNS"
+                  value={form.sections_of_law} onChange={handleChange}
+                />
+              </div>
+              <div className="col-6">
+                <label htmlFor="case-freeze" className="form-label">Funds frozen (INR)</label>
+                <input
+                  id="case-freeze" name="funds_frozen_inr" type="number" min="0"
+                  className="form-control"
+                  placeholder="Amount confirmed frozen by bank"
+                  value={form.funds_frozen_inr} onChange={handleChange}
                 />
               </div>
             </div>

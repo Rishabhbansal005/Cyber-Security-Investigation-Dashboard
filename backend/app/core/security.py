@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+import time
+from typing import Optional, Dict, Tuple
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -8,6 +9,10 @@ from app.core.supabase_client import get_supabase_admin
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
+
+# Avoid a Supabase round-trip on every dashboard widget request
+_user_cache: Dict[str, Tuple[float, "CurrentUser"]] = {}
+_USER_CACHE_TTL = 90.0
 
 
 class CurrentUser:
@@ -21,16 +26,23 @@ class CurrentUser:
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> CurrentUser:
-    """Validate Supabase JWT token and return the current user. Fallback to default user if auth fails."""
-    fallback_user = CurrentUser(id="00000000-0000-0000-0000-000000000000", email="officer@ccid.local", role="admin", full_name="Investigating Officer")
-    
+    """Validate Supabase JWT token and return the current user."""
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     if not credentials or not credentials.credentials:
-        return fallback_user
+        raise unauthorized
+
+    token = credentials.credentials
+    now = time.time()
+    cached = _user_cache.get(token)
+    if cached and now - cached[0] < _USER_CACHE_TTL:
+        return cached[1]
 
     try:
-        token = credentials.credentials
-        
-        # 1. Decode sub locally without verification to construct the query
         import json, base64
         try:
             payload_b64 = token.split(".")[1]
@@ -38,9 +50,9 @@ async def get_current_user(
             payload = json.loads(base64.urlsafe_b64decode(payload_b64).decode("utf-8"))
             user_id = payload.get("sub")
             if not user_id:
-                return fallback_user
+                raise unauthorized
         except Exception:
-            return fallback_user
+            raise unauthorized
             
         # 2. Look up the user profile using the service role key (bypasses RLS).
         import httpx
@@ -55,24 +67,32 @@ async def get_current_user(
 
         if user_resp.status_code != 200:
             logger.warning(f"User lookup failed: {user_resp.status_code} {user_resp.text}")
-            return fallback_user
+            raise unauthorized
 
         data = user_resp.json()
         if not data:
             logger.warning(f"No user profile found for id={user_id}")
-            return fallback_user
+            raise unauthorized
 
         user_data = data[0]
-        return CurrentUser(
+        user = CurrentUser(
             id=user_data["id"],
             email=user_data.get("email", ""),
-            role=user_data.get("role", "admin"), # defaulting to admin for local fallback
+            role=user_data.get("role", "investigator"),
             full_name=user_data.get("full_name")
         )
+        _user_cache[token] = (now, user)
+        if len(_user_cache) > 256:
+            expired = [k for k, (ts, _) in _user_cache.items() if now - ts >= _USER_CACHE_TTL]
+            for k in expired:
+                _user_cache.pop(k, None)
+        return user
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning(f"JWT validation failed: {e}")
-        return fallback_user
+        raise unauthorized
 
 
 async def get_current_user_optional(

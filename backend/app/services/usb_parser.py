@@ -127,8 +127,7 @@ class UsbParser:
                     target_path = lnk.local_base_path
                     
                 if not target_path:
-                    # Fallback for pylnk3 generated mock files to ensure the demo works
-                    target_path = "E:\\stolen_passwords.docx"
+                    return results
                     
                 drive_type = None
                 if lnk.has_link_info() and lnk.link_info is not None:

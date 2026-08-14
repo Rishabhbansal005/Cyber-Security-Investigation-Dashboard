@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Newspaper, ExternalLink } from 'lucide-react';
+import dashboardApi from '@/api/dashboard';
 
 export default function CyberNewsMarquee() {
-  const [news, setNews] = useState<any[]>([]);
   const [paused, setPaused] = useState(false);
+  const { data: news = [], isLoading, isError } = useQuery({
+    queryKey: ['dashboard-forensic-news'],
+    queryFn: () => dashboardApi.getForensicNews(),
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-  useEffect(() => {
-    // Fetch live cyber news using GNews API
-    const apikey = '500c7be6c81095bc9e063ccd3c634b44';
-    const apiUrl = `https://gnews.io/api/v4/search?q=cybercrime&country=in&lang=en&apikey=${apikey}`;
-    
-    fetch(apiUrl)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.articles) {
-          setNews(data.articles.slice(0, 10)); // Top 10 news
-        }
-      })
-      .catch(err => console.error("Error fetching news", err));
-  }, []);
+  const headlines = news.length > 0
+    ? news
+    : isLoading
+      ? [{ title: 'Fetching live digital forensics and cybercrime headlines…', url: null, source: 'LIVE' }]
+      : [{ title: isError ? 'News feed could not load. Confirm GNEWS_API_KEY in backend/.env and restart the API.' : 'No forensic headlines returned yet.', url: null, source: 'LIVE' }];
 
-  if (news.length === 0) return null;
-
-  const items = [...news, ...news];
+  const items = news.length > 0 ? [...headlines, ...headlines] : headlines;
 
   return (
     <>
@@ -72,15 +70,13 @@ export default function CyberNewsMarquee() {
           whiteSpace: 'nowrap',
         }}>
           <Newspaper size={14} />
-          LIVE NEWS
+          FORENSIC NEWS
         </div>
         <div style={{
           flex: 1,
           minWidth: 0,
           position: 'relative',
           overflow: 'hidden',
-          maskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
-          WebkitMaskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
         }}>
           <div
             className={`news-track${paused ? ' news-paused' : ''}`}
@@ -91,48 +87,34 @@ export default function CyberNewsMarquee() {
               height: '100%',
               display: 'flex',
               alignItems: 'center',
-              width: 'max-content',
+              gap: 24,
+              paddingLeft: 16,
+              whiteSpace: 'nowrap',
             }}
           >
-            {items.map((item, i) => (
-              <a
-                key={i}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '0 24px',
-                  color: 'rgba(255,255,255,0.8)',
-                  textDecoration: 'none',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: 13,
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
-              >
-                <span style={{ 
-                  color: '#eab308', 
-                  fontSize: 10, 
-                  fontWeight: 600, 
-                  fontFamily: 'JetBrains Mono,monospace' 
-                }}>
-                  {item.source?.name || 'News'}
-                </span>
-                <span style={{
-                  maxWidth: '400px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {item.title}
-                </span>
-                <ExternalLink size={12} opacity={0.5} />
-              </a>
-            ))}
+            {items.map((article, i) => {
+              const Tag = article.url ? 'a' : 'span';
+              return (
+                <Tag
+                  key={i}
+                  href={article.url || undefined}
+                  target={article.url ? '_blank' : undefined}
+                  rel={article.url ? 'noopener noreferrer' : undefined}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: '#cbd5e1',
+                    fontSize: 13,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span style={{ color: '#eab308', fontSize: 10, fontWeight: 700 }}>{article.source}</span>
+                  {article.title}
+                  {article.url ? <ExternalLink size={12} color="#64748b" /> : null}
+                </Tag>
+              );
+            })}
           </div>
         </div>
       </div>

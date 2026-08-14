@@ -1,0 +1,277 @@
+{
+  "accuracy": 0.9762470308788599,
+  "macro_f1": 0.9560050780529813,
+  "classification_report": {
+    "Account Takeover": {
+      "precision": 1.0,
+      "recall": 0.9411764705882353,
+      "f1-score": 0.9696969696969697,
+      "support": 17.0
+    },
+    "Cyberbullying/Harassment": {
+      "precision": 0.8461538461538461,
+      "recall": 0.8461538461538461,
+      "f1-score": 0.8461538461538461,
+      "support": 13.0
+    },
+    "Financial Fraud": {
+      "precision": 0.9732620320855615,
+      "recall": 0.9528795811518325,
+      "f1-score": 0.9629629629629629,
+      "support": 191.0
+    },
+    "Identity Theft": {
+      "precision": 1.0,
+      "recall": 0.9375,
+      "f1-score": 0.967741935483871,
+      "support": 16.0
+    },
+    "Investment Scam": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 36.0
+    },
+    "Job/Employment Scam": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 198.0
+    },
+    "Online Shopping Scam": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 13.0
+    },
+    "Other": {
+      "precision": 1.0,
+      "recall": 0.9629629629629629,
+      "f1-score": 0.9811320754716981,
+      "support": 27.0
+    },
+    "Phishing": {
+      "precision": 0.9737991266375546,
+      "recall": 1.0,
+      "f1-score": 0.9867256637168141,
+      "support": 223.0
+    },
+    "Sextortion": {
+      "precision": 0.9285714285714286,
+      "recall": 1.0,
+      "f1-score": 0.9629629629629629,
+      "support": 13.0
+    },
+    "Social Media Scam": {
+      "precision": 0.8125,
+      "recall": 0.8666666666666667,
+      "f1-score": 0.8387096774193549,
+      "support": 15.0
+    },
+    "UPI Fraud": {
+      "precision": 0.9620253164556962,
+      "recall": 0.95,
+      "f1-score": 0.9559748427672956,
+      "support": 80.0
+    },
+    "accuracy": 0.9762470308788599,
+    "macro avg": {
+      "precision": 0.9580259791586739,
+      "recall": 0.9547782939602953,
+      "f1-score": 0.9560050780529813,
+      "support": 842.0
+    },
+    "weighted avg": {
+      "precision": 0.9765691297581961,
+      "recall": 0.9762470308788599,
+      "f1-score": 0.976249626515789,
+      "support": 842.0
+    }
+  },
+  "confusion_matrix_labels": [
+    "Financial Fraud",
+    "UPI Fraud",
+    "Phishing",
+    "Job/Employment Scam",
+    "Investment Scam",
+    "Social Media Scam",
+    "Account Takeover",
+    "Identity Theft",
+    "Online Shopping Scam",
+    "Sextortion",
+    "Cyberbullying/Harassment",
+    "Other"
+  ],
+  "confusion_matrix": [
+    [
+      182,
+      3,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      4,
+      76,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      223,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      198,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      36,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      13,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      16,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      15,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      13,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      13,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      11,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      26
+    ]
+  ],
+  "prototype": true,
+  "dataset": "synthetic public-style complaints"
+}
