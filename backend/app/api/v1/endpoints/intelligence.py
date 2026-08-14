@@ -5,6 +5,7 @@ import csv
 import io
 import json
 import logging
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -347,6 +348,50 @@ async def case_entities(
     db = get_supabase_admin()
     items = get_entities(db, case_id)
     return {"items": items}
+
+
+class OfficerFeedbackBody(BaseModel):
+    complaint_text: str
+    predicted_category: Optional[str] = None
+    correct_category: str
+    agreed: bool = False
+
+
+@router.post("/analyze/feedback")
+async def officer_feedback(
+    body: OfficerFeedbackBody,
+    current_user: CurrentUser = Depends(get_current_user_optional),
+):
+    from ml.complaint_classifier.preprocess import load_categories
+
+    labels = load_categories()
+    if body.correct_category not in labels:
+        raise HTTPException(status_code=400, detail="Unknown category.")
+    path = Path(__file__).resolve().parents[4] / "ml" / "data" / "officer_corrections.csv"
+    # backend/app/api/v1/endpoints/intelligence.py -> parents[4] is backend?
+    # file: backend/app/api/v1/endpoints/intelligence.py
+    # parent0 endpoints, 1 v1, 2 api, 3 app, 4 backend. Yes backend/ml/data
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new = not path.exists()
+    with path.open("a", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        if new:
+            w.writerow(["complaint_text", "crime_category"])
+        if not body.agreed:
+            w.writerow([body.complaint_text.strip(), body.correct_category])
+        else:
+            w.writerow([body.complaint_text.strip(), body.correct_category])
+    db = _safe_db()
+    if db is not None:
+        write_officer_audit(
+            db,
+            action="ANALYZE_FEEDBACK",
+            target=body.correct_category,
+            officer_id=current_user.id,
+            officer_email=current_user.email,
+            metadata={"agreed": body.agreed, "predicted": body.predicted_category},
+        )
+    return {"ok": True, "saved": True, "note": "Correction saved. Retrain later: python -m ml.complaint_classifier.train"}
 
 
 @router.get("/dashboard/ml-stats")

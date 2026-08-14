@@ -31,80 +31,243 @@ function entityType(e: ExtractedEntity) {
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
-  letterSpacing: '0.1em',
+  letterSpacing: '0.12em',
   textTransform: 'uppercase',
   color: '#64748b',
   marginBottom: 8,
 };
 
-function ResultCard({ item, showFull }: { item: AnalyzeComplaintResponse; showFull: boolean }) {
+const CRIME_TYPES = [
+  'Financial Fraud', 'UPI Fraud', 'Phishing', 'Job/Employment Scam', 'Investment Scam',
+  'Social Media Scam', 'Account Takeover', 'Identity Theft', 'Online Shopping Scam',
+  'Sextortion', 'Cyberbullying/Harassment', 'Other',
+];
+
+function priorityTone(label?: string) {
+  const u = (label || '').toUpperCase();
+  if (u === 'HIGH') return { bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.4)', color: '#fca5a5', pill: '#ef4444' };
+  if (u === 'MEDIUM') return { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.35)', color: '#fcd34d', pill: '#f59e0b' };
+  return { bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.3)', color: '#6ee7b7', pill: '#10b981' };
+}
+
+function ResultCard({
+  item,
+  showFull,
+}: {
+  item: AnalyzeComplaintResponse;
+  showFull: boolean;
+}) {
   const clf = item.classification;
-  const scores = Object.entries(clf?.probabilities || {}).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 5);
+  const scores = Object.entries(clf?.probabilities || {}).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 4);
   const conf = clf?.confidence != null ? Math.round(clf.confidence * 100) : 0;
+  const draft = item.ncrp_draft;
+  const hits = item.identifier_hits || [];
+  const [fbNote, setFbNote] = React.useState('');
+  const [picked, setPicked] = React.useState(clf?.predicted_category || '');
+  const tone = priorityTone(item.priority?.priority_label);
+
+  React.useEffect(() => {
+    setPicked(clf?.predicted_category || '');
+    setFbNote('');
+  }, [item.complaint_text, clf?.predicted_category]);
+
+  const fb = useMutation({
+    mutationFn: (agreed: boolean) => intelligenceApi.sendFeedback({
+      complaint_text: item.complaint_text,
+      predicted_category: clf?.predicted_category,
+      correct_category: agreed ? (clf?.predicted_category || picked) : picked,
+      agreed,
+    }),
+    onSuccess: (_, agreed) => setFbNote(
+      agreed
+        ? 'Classification confirmed. Logged for the next training cycle.'
+        : 'Correction saved. It will be included the next time the model is trained.',
+    ),
+  });
+
+  const copyDraft = () => {
+    if (!draft) return;
+    const lines = [
+      `Category: ${draft.suggested_category || ''}`,
+      `Amount (INR): ${draft.amount_lost_inr ?? ''}`,
+      `UPI: ${draft.upi_id || ''}`,
+      `Phone: ${draft.phone || ''}`,
+      `URL: ${draft.url || ''}`,
+      `Txn/UTR: ${draft.transaction_id || ''}`,
+      `Email: ${draft.email || ''}`,
+    ].join('\n');
+    navigator.clipboard.writeText(lines);
+    setFbNote('NCRP draft fields copied.');
+  };
+
+  const narrative = item.complaint_text?.replace(/^pasted-text\s*/i, '') || item.complaint_text;
 
   return (
     <div className="row g-3">
-      <div className="col-12">
-        <div style={labelStyle}>Complaint</div>
-        <div style={{
-          background: 'rgba(15,23,42,0.7)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 10,
-          padding: '14px 16px',
-          fontSize: 14,
-          lineHeight: 1.6,
-          color: '#e2e8f0',
-          whiteSpace: 'pre-wrap',
-        }}>
-          {item.complaint_text?.replace(/^pasted-text\s*/i, '') || item.complaint_text}
-        </div>
-      </div>
-
-      <div className="col-12 col-md-6">
+      <div className="col-12 col-md-7">
         <div style={{
           height: '100%',
-          borderRadius: 12,
-          padding: 18,
-          background: 'linear-gradient(180deg, rgba(99,102,241,0.12), rgba(8,13,22,0.6))',
-          border: '1px solid rgba(129,140,248,0.22)',
+          borderRadius: 14,
+          padding: 20,
+          background: 'linear-gradient(165deg, rgba(99,102,241,0.16), rgba(8,13,22,0.75))',
+          border: '1px solid rgba(129,140,248,0.28)',
         }}>
-          <div style={labelStyle}>Predicted type</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc', marginBottom: 10 }}>
+          <div style={labelStyle}>Crime type</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
             {clf?.predicted_category || '—'}
           </div>
-          <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,0.08)', marginBottom: 8, overflow: 'hidden' }}>
-            <div style={{ width: `${conf}%`, height: '100%', background: '#818cf8', borderRadius: 99 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, marginBottom: 6 }}>
+            <div style={{ flex: 1, height: 6, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ width: `${conf}%`, height: '100%', background: '#818cf8', borderRadius: 99 }} />
+            </div>
+            <span style={{ fontSize: 12, color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>{conf}% confidence</span>
           </div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14 }}>Confidence {conf}%</div>
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>Other likely types</div>
           {scores.map(([label, p]) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: '#cbd5e1' }}>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5, color: '#cbd5e1' }}>
               <span>{label}</span>
-              <span className="font-mono" style={{ color: '#818cf8' }}>{Math.round(Number(p) * 100)}%</span>
+              <span className="font-mono" style={{ color: '#a5b4fc' }}>{Math.round(Number(p) * 100)}%</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="col-12 col-md-6">
+      <div className="col-12 col-md-5">
         <div style={{
           height: '100%',
-          borderRadius: 12,
-          padding: 18,
-          background: 'linear-gradient(180deg, rgba(34,211,238,0.1), rgba(8,13,22,0.6))',
-          border: '1px solid rgba(34,211,238,0.2)',
+          borderRadius: 14,
+          padding: 20,
+          background: tone.bg,
+          border: `1px solid ${tone.border}`,
         }}>
           <div style={labelStyle}>Suggested priority</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc', marginBottom: 8 }}>
-            {item.priority?.priority_label || '—'}
-            <span style={{ fontSize: 14, color: '#67e8f9', marginLeft: 8 }}>{item.priority?.priority_score ?? '—'}/100</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
+            <span style={{
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: '0.14em',
+              color: '#0b1220',
+              background: tone.pill,
+              borderRadius: 6,
+              padding: '4px 10px',
+            }}>
+              {item.priority?.priority_label || '—'}
+            </span>
+            <span style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc' }}>
+              {item.priority?.priority_score ?? '—'}<span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>/100</span>
+            </span>
           </div>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#cbd5e1', lineHeight: 1.55 }}>
-            {(item.priority?.reasons || []).map((r) => (
+          <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: '#cbd5e1', lineHeight: 1.55 }}>
+            {(item.priority?.reasons || []).slice(0, 4).map((r) => (
               <li key={r}>{r}</li>
             ))}
           </ul>
+          <div style={{ fontSize: 11, color: '#64748b', marginTop: 12 }}>
+            Advisory score only. Does not freeze accounts or assign guilt.
+          </div>
         </div>
       </div>
+
+      <div className="col-12">
+        <div style={labelStyle}>Narrative</div>
+        <div style={{
+          background: 'rgba(15,23,42,0.7)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          fontSize: 14,
+          lineHeight: 1.65,
+          color: '#e2e8f0',
+          whiteSpace: 'pre-wrap',
+        }}>
+          {narrative}
+        </div>
+      </div>
+
+      <div className="col-12">
+        <div style={{
+          borderRadius: 12,
+          padding: '14px 16px',
+          background: 'rgba(15,23,42,0.55)',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          <div style={{ ...labelStyle, marginBottom: 10 }}>Officer confirmation</div>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 0, marginBottom: 12 }}>
+            Confirm the type if it is correct, or choose the right category and save a correction.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <button type="button" className="btn btn-sm btn-primary" disabled={fb.isPending} onClick={() => fb.mutate(true)}>
+              Confirm type
+            </button>
+            <select className="form-select form-select-sm" style={{ width: 'auto', minWidth: 220 }} value={picked} onChange={(e) => setPicked(e.target.value)}>
+              {CRIME_TYPES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <button type="button" className="btn btn-sm btn-outline-secondary" disabled={fb.isPending} onClick={() => fb.mutate(false)}>
+              Save correction
+            </button>
+          </div>
+          {fbNote && <div style={{ fontSize: 12, color: '#86efac', marginTop: 10 }}>{fbNote}</div>}
+        </div>
+      </div>
+
+      {draft && (
+        <div className="col-12">
+          <div style={{
+            borderRadius: 12,
+            padding: 16,
+            background: 'rgba(8,13,22,0.55)',
+            border: '1px solid rgba(251,191,36,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ ...labelStyle, marginBottom: 0 }}>NCRP / 1930 draft</div>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={copyDraft}>Copy</button>
+            </div>
+            <div className="row g-2" style={{ fontSize: 13, color: '#e2e8f0' }}>
+              {[
+                ['Category', draft.suggested_category],
+                ['Amount INR', draft.amount_lost_inr != null ? String(draft.amount_lost_inr) : '—'],
+                ['UPI', draft.upi_id || '—'],
+                ['Phone', draft.phone || '—'],
+                ['URL', draft.url || '—'],
+                ['UTR / Txn', draft.transaction_id || '—'],
+              ].map(([k, v]) => (
+                <div key={k} className="col-6 col-md-4">
+                  <div style={{ color: '#64748b', fontSize: 11 }}>{k}</div>
+                  <div className="font-mono" style={{ wordBreak: 'break-all' }}>{v || '—'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {hits.length > 0 && (
+        <div className="col-12">
+          <div style={{
+            borderRadius: 12,
+            padding: 16,
+            background: 'rgba(244,63,94,0.08)',
+            border: '1px solid rgba(244,63,94,0.25)',
+          }}>
+            <div style={labelStyle}>Matching identifiers in other FIRs</div>
+            {hits.map((h) => (
+              <div key={`${h.type}-${h.value}`} style={{ fontSize: 13, color: '#fecdd3', marginBottom: 8 }}>
+                <span className="font-mono">{h.type}: {h.value}</span>
+                {' '}— {h.count} other case{h.count === 1 ? '' : 's'}
+                <div>
+                  {h.cases.map((c) => (
+                    <Link key={c.case_id} to={`/cases/${c.case_id}`} style={{ color: '#818cf8', marginRight: 10, fontSize: 12 }}>
+                      {c.case_number || c.title || c.case_id}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="col-12 col-md-6">
         <div style={{
@@ -115,7 +278,7 @@ function ResultCard({ item, showFull }: { item: AnalyzeComplaintResponse; showFu
           minHeight: 140,
         }}>
           <div style={labelStyle}>
-            Phone / UPI / URL {showFull ? '· visible' : '· hidden digits'}
+            Extracted identifiers {showFull ? '· unmasked' : '· masked'}
           </div>
           {(item.entities || []).length === 0 ? (
             <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>None found in this text.</p>
@@ -215,9 +378,9 @@ export default function ComplaintIntelligence() {
     <div className="animate-in">
       <div className="page-header">
         <div>
-          <h1 className="page-header-title">Complaint AI</h1>
+          <h1 className="page-header-title">Complaint intelligence</h1>
           <p className="page-header-subtitle">
-            Drop a complaint file or paste the FIR. The model suggests a crime type for officer review.
+            Classify pasted or uploaded FIR text, extract identifiers, and draft NCRP fields. Predictions require officer review.
           </p>
         </div>
       </div>
@@ -226,7 +389,7 @@ export default function ComplaintIntelligence() {
         <div className="col-12 col-lg-5">
           <div className="card" style={{ border: '1px solid rgba(129,140,248,0.15)' }}>
             <div className="card-body">
-              <div style={labelStyle}>1. Input</div>
+              <div style={labelStyle}>Input</div>
               <div
                 {...getRootProps()}
                 style={{
@@ -240,12 +403,12 @@ export default function ComplaintIntelligence() {
                 }}
               >
                 <input {...getInputProps()} />
-                <div style={{ fontSize: 22, marginBottom: 8 }}>📄</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#818cf8', marginBottom: 8 }}>Upload file</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>
-                  {file ? file.name : 'Drop complaint file here'}
+                  {file ? file.name : 'Drop complaint here, or click to browse'}
                 </div>
                 <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
-                  Or click to browse · .txt / .csv / .json / .pdf · max 8 MB
+                  PDF, TXT, CSV, or JSON · max 8 MB · selectable text in PDFs
                 </div>
               </div>
               {file && (
@@ -254,16 +417,16 @@ export default function ComplaintIntelligence() {
                 </button>
               )}
 
-              <label className="form-label">Or type / paste the complaint</label>
+              <label className="form-label">Paste complaint text</label>
               <textarea
                 className="form-control"
                 rows={7}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste the complaint or FIR narrative…"
+                placeholder="English, Hindi, or Hinglish…"
               />
 
-              <label className="form-label" style={{ marginTop: 14 }}>Save against an FIR (optional)</label>
+              <label className="form-label" style={{ marginTop: 14 }}>Link to an existing FIR (optional)</label>
               <select className="form-select" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
                 <option value="">Do not save to a case</option>
                 {cases.map((c) => (
@@ -292,7 +455,7 @@ export default function ComplaintIntelligence() {
           <div className="card h-100" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="card-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10 }}>
-                <div style={{ ...labelStyle, marginBottom: 0 }}>2. Result</div>
+                <div style={{ ...labelStyle, marginBottom: 0 }}>Analysis</div>
                 {item && (item.entities || []).length > 0 && (
                   <button
                     type="button"

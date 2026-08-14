@@ -21,7 +21,8 @@ def clean_text(text: str) -> str:
     t = text.lower()
     t = _URL_RE.sub(" urltoken ", t)
     t = re.sub(r"[₹$]", " rs ", t)
-    t = re.sub(r"[^a-z0-9@.\s]", " ", t)
+    t = re.sub(r"\b(ruppess|ruppes|rupees|rupaye|rupya)\b", " rupees ", t)
+    t = re.sub(r"[^a-z0-9@.\s\u0900-\u097F]", " ", t)
     t = _WS_RE.sub(" ", t).strip()
     return t
 

@@ -56,6 +56,9 @@ TEMPLATES: dict[str, list[str]] = {
         "They changed my SIM and accessed my UPI. Lost {amt}.",
         "Gmail OTP was stolen and my shopping account was hijacked.",
         "WhatsApp was taken over using a verification code I shared.",
+        "Someone accessed my WhatsApp and asked {amt} rupees from our family group. After getting the money he blocked me and deleted all the chats.",
+        "My WhatsApp was hacked. The person messaged my family group asking for {amt} then blocked everyone and deleted the data.",
+        "Unknown person logged into my WhatsApp, impersonated me in family group, took {amt}, then logged out and wiped chats.",
     ],
     "Identity Theft": [
         "Someone used my PAN and Aadhaar to open a loan. Amount {amt}.",
@@ -105,6 +108,62 @@ URLS = [
 HANDLES = ["invest_guru", "jobs_official", "crypto_king", "shop_deals", "support_desk"]
 EMAILS = ["helpdesk@mail.test", "hr@jobs-offer.test", "verify@secure-bank.test"]
 PHONES = ["9876543210", "9123456789", "9988776655", "9001122334"]
+HINDI_TEMPLATES: dict[str, list[str]] = {
+    "Financial Fraud": [
+        "Mere account se {amt} rupaye nikal gaye OTP share karne ke baad.",
+        "Bank wale bolke KYC ke naam pe {amt} rupaye cheat ho gaya.",
+        "मेरे खाते से {amt} रुपये OTP देने के बाद कट गए।",
+    ],
+    "UPI Fraud": [
+        "Maine Google Pay pe {amt} rupaye {upi} ko bhej diye collect request reverse karne ke chakkar mein.",
+        "PhonePe se {upi} ko {amt} chale gaye UPI PIN daalte hi.",
+        "मैंने {upi} पर {amt} रुपये भेज दिए, कहा reverse हो जाएगा।",
+    ],
+    "Phishing": [
+        "SMS mein {url} aaya KYC expire bolke, maine login daal diya.",
+        "Fake bank page {url} pe password de diya.",
+        "लिंक {url} पर क्लिक करके नेट बैंकिंग डिटेल दे दी।",
+    ],
+    "Job/Employment Scam": [
+        "WhatsApp pe job bola, {amt} rupaye registration ke naam pe le liye phir block.",
+        "Work from home ke liye {amt} security deposit maanga.",
+        "नौकरी के नाम पर {amt} रुपये लेकर ब्लॉक कर दिया।",
+    ],
+    "Investment Scam": [
+        "Instagram {handle} pe crypto returns dikhaya, {amt} {upi} pe bhej diye.",
+        "Trading tip ke naam pe {amt} UPI se kat gaya.",
+    ],
+    "Social Media Scam": [
+        "Instagram {handle} ne giveaway bolke {amt} maang liye.",
+        "Facebook pe friend request ke baad paise kat gaye.",
+    ],
+    "Account Takeover": [
+        "Mera WhatsApp OTP de diya, account hijack ho gaya.",
+        "Instagram hack ho gaya {url} pe password daalne ke baad.",
+        "Kisi ne mera WhatsApp access kar liya, family group se {amt} maange, paise milte hi block karke chats delete kar diye.",
+        "WhatsApp hack hua, ghar walon se {amt} rupaye maange phir account se nikal gaye.",
+    ],
+    "Identity Theft": [
+        "Kisi ne mere Aadhaar PAN se loan nikal liya {amt} ka.",
+        "Mere documents se SIM nikal li gayi.",
+    ],
+    "Online Shopping Scam": [
+        "Online phone order kiya {amt} {upi} pe, maal nahi aaya.",
+        "Instagram shop ne {amt} leke block kar diya.",
+    ],
+    "Sextortion": [
+        "Video call record karke {amt} maang rahe hain {upi} pe.",
+        "Photos leak karne ki dhamki, {amt} do.",
+    ],
+    "Cyberbullying/Harassment": [
+        "WhatsApp pe {phone} se gali galoch aa raha hai baar baar.",
+        "Fake profile bana ke harass kar rahe hain.",
+    ],
+    "Other": [
+        "Office computer pe malware aa gaya attachment kholne ke baad.",
+        "Website hack ho gayi, madad chahiye.",
+    ],
+}
 
 
 def _fill(template: str, rng: random.Random) -> str:
@@ -135,6 +194,9 @@ def generate_rows(n_per_class: int = 80, seed: int = 42) -> list[tuple[str, str]
                 "",
             ])
             rows.append((base + noise, label))
+        for ht in HINDI_TEMPLATES.get(label, []):
+            for _ in range(max(12, n_per_class // 4)):
+                rows.append((_fill(ht, rng) + rng.choice([" Kripya madad karein.", " Kal hua.", " Screenshot hai.", ""]), label))
     rng.shuffle(rows)
     return rows
 

@@ -38,7 +38,14 @@ def main():
         df.to_csv(csv_path, index=False)
 
     labels = load_categories()
+    extra = pd.DataFrame(generate_rows(n_per_class=40), columns=["complaint_text", "crime_category"])
+    df = pd.concat([df, extra], ignore_index=True)
+    corr = ROOT / "data" / "officer_corrections.csv"
+    if corr.exists():
+        df = pd.concat([df, pd.read_csv(corr)], ignore_index=True)
     df = df[df["crime_category"].isin(labels)].copy()
+    df = df.dropna(subset=["complaint_text", "crime_category"])
+    df = df.drop_duplicates(subset=["complaint_text"])
     df["text"] = df["complaint_text"].map(clean_text)
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -46,7 +53,13 @@ def main():
     )
 
     pipe = Pipeline([
-        ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_features=8000)),
+        ("tfidf", TfidfVectorizer(
+            ngram_range=(1, 2),
+            min_df=2,
+            max_features=12000,
+            token_pattern=r"(?u)\b\w+\b",
+            stop_words="english",
+        )),
         ("clf", LogisticRegression(max_iter=400, class_weight="balanced")),
     ])
     pipe.fit(X_train, y_train)

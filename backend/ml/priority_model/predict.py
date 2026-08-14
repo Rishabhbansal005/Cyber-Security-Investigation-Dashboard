@@ -40,6 +40,15 @@ _RULE = {
     "similar": 15,
     "confidence": 5,
     "evidence": 5,
+    "high_harm_type": 35,
+}
+
+_HIGH_HARM = {
+    "Account Takeover",
+    "Sextortion",
+    "Identity Theft",
+    "Financial Fraud",
+    "UPI Fraud",
 }
 
 
@@ -75,6 +84,11 @@ def prototype_score(feats: dict[str, Any]) -> int:
     s += min(float(feats.get("similar_count") or 0) / 8.0, 1.0) * _RULE["similar"]
     s += float(feats.get("classifier_confidence") or 0) * _RULE["confidence"]
     s += min(float(feats.get("evidence_count") or 0) / 3.0, 1.0) * _RULE["evidence"]
+    cat = str(feats.get("crime_category") or "")
+    if cat in _HIGH_HARM:
+        s += _RULE["high_harm_type"]
+        if amount >= 25000:
+            s += 22
     return int(round(min(100, max(0, s))))
 
 
@@ -89,8 +103,11 @@ def label_from_score(score: int) -> str:
 def explanation(feats: dict[str, Any]) -> list[str]:
     reasons = []
     amount = float(feats.get("amount_inr") or 0)
+    cat = str(feats.get("crime_category") or "")
+    if cat in _HIGH_HARM:
+        reasons.append(f"{cat} typically needs faster officer review")
     if amount >= 25000:
-        reasons.append(f"High reported amount (₹{amount:,.0f})")
+        reasons.append(f"Reported amount ₹{amount:,.0f}")
     hours = float(feats.get("hours_since_incident") or 999)
     if hours <= 24:
         reasons.append("Recent incident (within 24 hours)")

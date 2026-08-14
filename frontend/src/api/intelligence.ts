@@ -39,12 +39,33 @@ export interface PriorityResult {
   is_prototype?: boolean;
 }
 
+export interface IdentifierHit {
+  type: string;
+  value: string;
+  count: number;
+  cases: SimilarCase[];
+}
+
+export interface NcrpDraft {
+  suggested_category?: string;
+  amount_lost_inr?: number | null;
+  upi_id?: string;
+  phone?: string;
+  url?: string;
+  transaction_id?: string;
+  email?: string;
+  incident_date?: string | null;
+  narrative_preview?: string;
+}
+
 export interface AnalyzeComplaintResponse {
   case_id: string;
   complaint_text: string;
   classification: CategoryClassification;
   entities: ExtractedEntity[];
   similar_cases: SimilarCase[];
+  identifier_hits?: IdentifierHit[];
+  ncrp_draft?: NcrpDraft;
   priority: PriorityResult;
   embedding_version?: string;
   is_prototype: boolean;
@@ -137,6 +158,15 @@ const intelligenceApi = {
       timeout: 120000,
       headers: { 'Content-Type': undefined as unknown as string },
     });
+    return response.data;
+  },
+  sendFeedback: async (payload: {
+    complaint_text: string;
+    predicted_category?: string;
+    correct_category: string;
+    agreed: boolean;
+  }) => {
+    const response = await apiClient.post('/analyze/feedback', payload);
     return response.data;
   },
 };

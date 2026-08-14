@@ -8,9 +8,17 @@ PHONE_RE = re.compile(r"(?:\+91[\s-]?)?[6-9]\d{9}\b")
 EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 UPI_RE = re.compile(r"\b[\w.\-]{2,256}@[a-zA-Z]{2,64}\b")
 URL_RE = re.compile(r"https?://[^\s<>\"']+|www\.[^\s<>\"']+", re.I)
-HANDLE_RE = re.compile(r"(?:instagram|whatsapp|facebook|telegram|twitter|x\.com)[:\s/@]+([\w.]{2,40})", re.I)
+HANDLE_RE = re.compile(
+    r"(?:instagram|facebook|telegram|twitter|x\.com)[:\s/@]+([\w.]{2,40})"
+    r"|(?:whatsapp)[:/@]+([\w.]{2,40})",
+    re.I,
+)
 AT_HANDLE_RE = re.compile(r"(?<!\w)@([A-Za-z0-9_.]{2,30})\b")
-AMOUNT_RE = re.compile(r"(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)|([\d,]+(?:\.\d{1,2})?)\s*(?:rupees|rs)\b", re.I)
+AMOUNT_RE = re.compile(
+    r"(?:₹|rs\.?|inr|रुपये|रुपए|रु)\s*([\d,]+(?:\.\d{1,2})?)"
+    r"|([\d,]+(?:\.\d{1,2})?)\s*(?:rupees|ruppess|ruppes|rupaye|rupya|rs|रुपये|रुपए)\b",
+    re.I,
+)
 TXN_RE = re.compile(r"\b(?:UTR|TXN|TXNID|REF)[:\s-]*([A-Z0-9]{8,22})\b", re.I)
 ACCOUNT_RE = re.compile(r"\b(?:a/?c|account)[:\s-]*(\d{9,18})\b", re.I)
 
@@ -80,7 +88,9 @@ def extract_entities(text: str) -> list[dict[str, Any]]:
     for m in URL_RE.finditer(text):
         add("url", m.group(0))
     for m in HANDLE_RE.finditer(text):
-        add("social_handle", m.group(1))
+        handle = m.group(1) or m.group(2)
+        if handle:
+            add("social_handle", handle)
     for m in AT_HANDLE_RE.finditer(text):
         handle = m.group(1)
         if "." in handle and handle.count(".") >= 1 and len(handle) > 8:

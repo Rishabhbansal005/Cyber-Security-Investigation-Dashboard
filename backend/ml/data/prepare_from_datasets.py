@@ -144,6 +144,8 @@ def cap_per_class(df: pd.DataFrame, n: int) -> pd.DataFrame:
 def main():
     labels = set(load_categories())
     frames = [from_complaints(), from_india(), from_chakra(), from_jobs()]
+    from ml.data.generate_complaints import generate_rows
+    frames.append(pd.DataFrame(generate_rows(n_per_class=40), columns=["complaint_text", "crime_category"]))
     df = pd.concat(frames, ignore_index=True)
     df = df[df["complaint_text"].astype(str).str.len() >= 20]
     df = df[df["crime_category"].isin(labels)]
