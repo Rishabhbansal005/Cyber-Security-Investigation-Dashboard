@@ -17,7 +17,10 @@ export default function AppLayout() {
         onContactOpen={() => setContactOpen(true)}
       />
       <div className={`main-content${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
-        <Topbar onMenuToggle={() => setSidebarCollapsed((c) => !c)} />
+        <Topbar
+          sidebarCollapsed={sidebarCollapsed}
+          onMenuToggle={() => setSidebarCollapsed((c) => !c)}
+        />
         <main className="page-content animate-in">
           <Outlet />
         </main>

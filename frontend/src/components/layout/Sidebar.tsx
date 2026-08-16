@@ -55,11 +55,6 @@ const Icons = {
       <path d="M5.5 8h5M5.5 11h3" strokeLinecap="round" />
     </svg>
   ),
-  shield: (
-    <svg viewBox="0 0 16 16" fill="currentColor" width="18" height="18">
-      <path d="M8 1L2 3.5V8c0 3.5 2.5 6 6 7.5C14 14 16 11.5 16 8V3.5L8 1zM8 2.2l5.5 2v3.8c0 2.8-2 5-5.5 6.3C5 13 3 10.8 3 8V4.2L8 2.2z" />
-    </svg>
-  ),
   chevronLeft: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
       <path d="M10 3L5 8l5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -155,30 +150,17 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       {/* Branding */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">{Icons.shield}</div>
-        {!collapsed && (
-          <div className="sidebar-logo-text">
-            <span className="sidebar-logo-title">CCID</span>
-            <span className="sidebar-logo-subtitle">Investigation Platform</span>
-          </div>
-        )}
+        <img
+          src="/ccid-logo.png"
+          alt="CCID"
+          className="sidebar-logo-img"
+        />
         <button
+          type="button"
+          className="sidebar-toggle"
           onClick={onToggle}
-          style={{
-            marginLeft: collapsed ? 'auto' : 'auto',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            padding: '4px',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            transition: 'color 0.15s',
-          }}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? Icons.chevronRight : Icons.chevronLeft}
         </button>

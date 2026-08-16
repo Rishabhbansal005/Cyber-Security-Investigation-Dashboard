@@ -13,6 +13,7 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 interface TopbarProps {
+  sidebarCollapsed?: boolean;
   onMenuToggle?: () => void;
 }
 
@@ -23,7 +24,7 @@ const timeStr = now.toLocaleTimeString('en-US', {
   hour12: false,
 });
 
-export default function Topbar({ onMenuToggle }: TopbarProps) {
+export default function Topbar({ sidebarCollapsed, onMenuToggle }: TopbarProps) {
   const { pathname } = useLocation();
   const { user } = useAuth();
 
@@ -31,11 +32,12 @@ export default function Topbar({ onMenuToggle }: TopbarProps) {
 
   return (
     <header className="topbar">
-      {/* Mobile menu toggle */}
       <button
-        className="topbar-icon-btn d-md-none"
+        type="button"
+        className={`topbar-icon-btn${sidebarCollapsed ? '' : ' d-md-none'}`}
         onClick={onMenuToggle}
-        title="Toggle menu"
+        title={sidebarCollapsed ? 'Open sidebar' : 'Toggle menu'}
+        aria-label={sidebarCollapsed ? 'Open sidebar' : 'Toggle menu'}
         style={{ border: 'none' }}
       >
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="15" height="15">
