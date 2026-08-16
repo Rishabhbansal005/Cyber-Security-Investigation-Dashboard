@@ -2,11 +2,52 @@
 
 **Tagline:** Tracing truth · Protecting India
 
-CCID is a full investigation dashboard for cybercrime cells. Officers sign in, open FIRs, upload evidence, run forensic parsers, enrich IOCs, use OSINT and live threat feeds, classify complaints with ML, check image authenticity, and export PDF reports.
+---
 
-This README lists **what is actually in the repository** (frontend, FastAPI backend, ML, Supabase schema). It is not a marketing summary.
+## What this project is
+
+CCID is a **command-center web app** I built so a cybercrime investigation does not live in ten different tools. One login covers:
+
+- FIR / NCRP-style **case files** (police station, complainant, sections of law)
+- **Evidence** upload with hashes and forensic parsers (PCAP, EVTX, browser, USB, memory, CDR, financial CSVs, images)
+- **OSINT and live threat intel** (OTX, ThreatFox, URLhaus)
+- **ML** for complaint triage and image authenticity checks
+- **Reports** (PDF) and an optional **Cyber Copilot**
+
+The rest of this README is a catalogue of what is in the repo (screens, APIs, models, schema).
 
 ---
+
+## Why I made it
+
+Cybercrime in India is high-volume: UPI fraud, phishing, job scams, fake profiles, and compromised devices. Officers already have NCRP, WhatsApp forwards, PCAP files, bank CSVs, and screenshots — but they are usually **scattered**.
+
+I made CCID to:
+
+1. **Put the case in one place** — FIR fields, suspects, evidence, findings, and a closeable case status that the dashboard actually counts.
+2. **Shorten time-to-lead** — parse artefacts automatically, correlate IOCs, and pull public threat feeds instead of only manual copy-paste into other sites.
+3. **Triage complaints in Hindi and English** — a classifier + priority model so a queue of narratives can be sorted before a human reads every line.
+4. **Give officers a first look at images** — GAN / AI-still models as **assist**, never as court proof.
+5. **Keep an Indian operational context** — 1930 and other helplines, Delhi-NCR hotspot view, bilingual UI, NCRP/FIR identifiers.
+
+It is built as a **prototype / working platform** for a cyber cell workflow, not as a replacement for statutory processes, FSL reports, or a judge.
+
+---
+
+## Who it is for
+
+| Audience | How they would use it |
+|---|---|
+| **Cybercrime police / cyber cells** (India) | Day-to-day FIR desk: open case, attach evidence, run parsers, export a report |
+| **Digital forensics (DFIR) investigators** | PCAP, EVTX, memory, USB, browser history, image EXIF in one case file |
+| **Intelligence / OSINT officers** | Domain, CVE, WHOIS, Shodan, SOCMINT, live IOC feeds |
+| **Supervisors / cell in-charge** | Command Center: open vs closed volume, priority mix, hotspots |
+| **Not for** | The public filing a complaint (that stays on NCRP / 1930); CCID is an **internal officer console** after a case exists |
+
+Roles in the app: **admin**, **investigator**, **viewer**. Sign-in is officer email and password (Supabase).
+
+---
+
 
 ## Product identity
 
