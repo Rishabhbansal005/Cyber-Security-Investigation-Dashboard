@@ -184,10 +184,19 @@ export default function CaseDetail() {
                         value={editForm.status}
                         onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as CaseStatus }))}
                       >
-                        {['open','active','pending_review','closed','archived'].map((s) => (
-                          <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                        {[
+                          { value: 'open', label: 'Open' },
+                          { value: 'active', label: 'Active' },
+                          { value: 'pending_review', label: 'Pending review' },
+                          { value: 'closed', label: 'Closed' },
+                          { value: 'archived', label: 'Archived' },
+                        ].map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
                         ))}
                       </select>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
+                        To close this FIR, choose <strong style={{ color: '#e2e8f0' }}>Closed</strong> here, then save.
+                      </div>
                     </div>
                     <div className="col-6">
                       <label className="form-label">Priority</label>
@@ -197,7 +206,7 @@ export default function CaseDetail() {
                         onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value as CasePriority }))}
                       >
                         {['low','medium','high','critical'].map((p) => (
-                          <option key={p} value={p}>{p}</option>
+                          <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                         ))}
                       </select>
                     </div>
@@ -220,6 +229,15 @@ export default function CaseDetail() {
                       {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button className="btn btn-outline-secondary" onClick={() => setEditing(false)}>Cancel</button>
+                    {editForm.status !== 'closed' && (
+                      <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => updateMutation.mutate({ ...editForm, status: 'closed' })}
+                        disabled={updateMutation.isPending}
+                      >
+                        Close this case
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (

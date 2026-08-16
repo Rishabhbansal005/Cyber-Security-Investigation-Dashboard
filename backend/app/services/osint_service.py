@@ -29,24 +29,73 @@ class OsintService:
         query = re.sub(r':\d+$', '', query)
         return query.strip().lower()
 
+    def _parse_ip(self, query: str):
+        try:
+            return ipaddress.ip_address(query)
+        except ValueError:
+            return None
+
+    def _not_public_internet_ip(self, ip_obj) -> str | None:
+        if ip_obj.is_loopback:
+            return (
+                "This is a loopback address (your own PC, e.g. 127.0.0.1). "
+                "Threat intel APIs have no data on it. Use a public IP such as 8.8.8.8 or 1.1.1.1, "
+                "or a domain such as google.com."
+            )
+        if ip_obj.is_private or ip_obj.is_link_local or ip_obj.is_reserved or ip_obj.is_multicast:
+            return (
+                "This is a private/LAN or reserved IP, not a public internet address. "
+                "OTX and Shodan only work on public IPs. Try 8.8.8.8, 1.1.1.1, or a domain."
+            )
+        return None
+
+    def _friendly_otx_http_error(self, status: int, body: str) -> str:
+        low = (body or "").lower()
+        if "loopback" in low:
+            return (
+                "OTX rejected this address because it is loopback (your PC). "
+                "Search a public IP (8.8.8.8) or a domain (google.com)."
+            )
+        if "private" in low:
+            return (
+                "OTX rejected this address because it is a private/LAN IP. "
+                "Use a public IP or domain."
+            )
+        if status == 400:
+            return (
+                "OTX could not use this value. Domain Reputation needs a domain (google.com), "
+                "not an email. For IPs use a public address like 1.1.1.1, not 127.0.0.1."
+            )
+        return f"OTX API returned status {status}"
+
     def _determine_type(self, query: str) -> str:
-        # Very basic regex for IP
-        if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", query):
-            return "IPv4"
-        # Regex for MD5/SHA1/SHA256
+        ip_obj = self._parse_ip(query)
+        if ip_obj:
+            return "IPv6" if ip_obj.version == 6 else "IPv4"
         if re.match(r"^[a-fA-F0-9]{32}$", query):
             return "FileHash-MD5"
         if re.match(r"^[a-fA-F0-9]{40}$", query):
             return "FileHash-SHA1"
         if re.match(r"^[a-fA-F0-9]{64}$", query):
             return "FileHash-SHA256"
-        # Otherwise assume domain
         return "domain"
 
     async def search_indicator(self, query: str) -> Dict[str, Any]:
         query = self._normalize_query(query)
         indicator_type = self._determine_type(query)
-        
+
+        ip_obj = self._parse_ip(query)
+        if ip_obj:
+            blocked = self._not_public_internet_ip(ip_obj)
+            if blocked:
+                return {
+                    "success": False,
+                    "error": blocked,
+                    "type": indicator_type,
+                    "findings": [],
+                    "stats": {"mentions": 0, "leaks": 0},
+                }
+
         # If no API key is provided, return a clear error
         if not self.otx_key:
             return {
@@ -59,9 +108,9 @@ class OsintService:
 
         endpoint = f"{self.otx_url}/indicators/{indicator_type}/{query}/general"
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=25.0) as client:
             try:
-                response = await client.get(endpoint, headers=self.headers, timeout=10.0)
+                response = await client.get(endpoint, headers=self.headers)
                 if response.status_code == 200:
                     data = response.json()
                     
@@ -115,16 +164,27 @@ class OsintService:
                         pass
                     return {
                         "success": False,
-                        "error": f"OTX API returned status {response.status_code}: {err_body}",
+                        "error": self._friendly_otx_http_error(response.status_code, err_body),
                         "findings": [],
                         "stats": {"mentions": 0, "leaks": 0}
                     }
-            except Exception as e:
+            except httpx.TimeoutException:
                 return {
                     "success": False,
-                    "error": str(e),
+                    "error": (
+                        "AlienVault OTX took too long for this indicator (common for busy Tor / scanner IPs). "
+                        "Try again, or look up 8.8.8.8 to confirm the link works."
+                    ),
                     "findings": [],
-                    "stats": {"mentions": 0, "leaks": 0}
+                    "stats": {"mentions": 0, "leaks": 0},
+                }
+            except Exception as e:
+                msg = str(e).strip() or e.__class__.__name__
+                return {
+                    "success": False,
+                    "error": f"Could not reach AlienVault OTX: {msg}",
+                    "findings": [],
+                    "stats": {"mentions": 0, "leaks": 0},
                 }
 
     async def get_cve_details(self, cve_id: str) -> Dict[str, Any]:
@@ -236,7 +296,17 @@ class OsintService:
                 "error": "ALIENVAULT_OTX_KEY is not configured in backend.",
                 "domain": domain,
             }
-        endpoint = f"{self.otx_url}/indicators/domain/{domain}/general"
+
+        ip_obj = self._parse_ip(domain)
+        if ip_obj:
+            blocked = self._not_public_internet_ip(ip_obj)
+            if blocked:
+                return {"success": False, "error": blocked, "domain": domain}
+            otx_type = "IPv6" if ip_obj.version == 6 else "IPv4"
+        else:
+            otx_type = "domain"
+
+        endpoint = f"{self.otx_url}/indicators/{otx_type}/{domain}/general"
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(endpoint, headers=self.headers, timeout=12.0)
@@ -297,7 +367,13 @@ class OsintService:
                         "recent_pulses": [],
                     }
                 else:
-                    return {"success": False, "error": f"OTX API returned status {response.status_code}"}
+                    return {
+                        "success": False,
+                        "error": self._friendly_otx_http_error(
+                            response.status_code,
+                            (response.text or "")[:200],
+                        ),
+                    }
             except Exception as e:
                 return {"success": False, "error": str(e)}
 
@@ -452,6 +528,14 @@ class OsintService:
 
     async def lookup_shodan(self, ip: str) -> Dict[str, Any]:
         """Perform a Shodan host lookup for an IP address."""
+        ip = ip.strip()
+        ip_obj = self._parse_ip(ip)
+        if ip_obj:
+            blocked = self._not_public_internet_ip(ip_obj)
+            if blocked:
+                return {"success": False, "error": blocked, "ip": ip}
+        elif not re.match(r"^[a-fA-F0-9:.]+$", ip):
+            return {"success": False, "error": "Shodan needs a public IP address (e.g. 1.1.1.1), not a domain."}
         
         async def fetch_internetdb():
             # Shodan's free InternetDB API requires no authentication

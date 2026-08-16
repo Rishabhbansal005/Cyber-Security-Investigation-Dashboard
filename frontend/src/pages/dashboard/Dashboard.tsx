@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, ResponsiveContainer, Legend,
 } from 'recharts';
 import { useAuth } from '@/context/AuthContext';
@@ -16,7 +16,7 @@ import CyberNewsMarquee from '@/components/dashboard/CyberNewsMarquee';
 import casesApi from '@/api/cases';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertTriangle, Shield, MapPin, Target, DollarSign, Activity, Users, FileText } from 'lucide-react';
+import { Search, AlertTriangle, MapPin, Activity, Users } from 'lucide-react';
 
 /* ─── Emergency Helplines Data ─────────────────────────────── */
 const HELPLINES = [
@@ -473,12 +473,6 @@ const I = {
       <path d="M7 10h6M7 14h4" strokeLinecap="round" />
     </svg>
   ),
-  critical: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M10 2L2 17h16L10 2z" strokeLinejoin="round" />
-      <path d="M10 8v5M10 15h.01" strokeLinecap="round" />
-    </svg>
-  ),
   active: (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
       <circle cx="10" cy="10" r="7.5" />
@@ -497,26 +491,6 @@ const I = {
       <path d="M13 13l4 4" strokeLinecap="round" />
     </svg>
   ),
-  correlation: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <circle cx="5" cy="5" r="2.5" />
-      <circle cx="15" cy="5" r="2.5" />
-      <circle cx="10" cy="15" r="2.5" />
-      <path d="M7 6L8.5 12.5M13 6L11.5 12.5M7.5 5.5h5" />
-    </svg>
-  ),
-  attack: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M10 2l2 7h7l-5.5 4 2 7L10 16l-5.5 4 2-7L1 9h7z" strokeLinejoin="round" />
-    </svg>
-  ),
-  report: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M4 2h9l4 4v13H4V2z" strokeLinejoin="round" />
-      <path d="M13 2v4h4" />
-      <path d="M7 10h6M7 14h4" strokeLinecap="round" />
-    </svg>
-  ),
   newcase: (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <path d="M3 5h14v13H3z" strokeLinejoin="round" />
@@ -524,29 +498,13 @@ const I = {
       <path d="M10 9v6M7 12h6" strokeLinecap="round" />
     </svg>
   ),
-  upload: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-      <path d="M4 14v3h12v-3" />
-      <path d="M10 3v10M7 6l3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  generate: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-      <path d="M4 2h9l4 4v12H4V2z" strokeLinejoin="round" />
-      <path d="M13 2v4h4" />
-      <path d="M7 10h6M7 14h4" strokeLinecap="round" />
-    </svg>
-  ),
   plus: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
       <path d="M8 3v10M3 8h10" strokeLinecap="round" />
     </svg>
   ),
-  money: <DollarSign size={18} strokeWidth={2.5} />,
   suspects: <Users size={18} strokeWidth={2.5} />,
-  tracker: <Target size={18} strokeWidth={2.5} />,
-  bank: <Shield size={18} strokeWidth={2.5} />,
-  social: <Activity size={18} strokeWidth={2.5} />
+  tracker: <Search size={18} strokeWidth={2.5} />,
 };
 
 /* ─── Stat card configs ─────────────────────────────────────── */
@@ -557,13 +515,6 @@ const STAT_CARDS = [
     icon: I.cases,
     color: '#6366f1',
     colorMuted: 'rgba(99,102,241,0.12)',
-  },
-  {
-    id: 'funds_frozen',
-    label: 'Funds Frozen',
-    icon: I.money,
-    color: '#10b981',
-    colorMuted: 'rgba(16,185,129,0.12)',
   },
   {
     id: 'active_cases',
@@ -590,25 +541,11 @@ const SEC_STATS = [
     colorMuted: 'rgba(167,139,250,0.12)',
   },
   {
-    id: 'gangs_identified',
-    label: 'Gangs Identified',
-    icon: I.attack,
-    color: '#f43f5e',
-    colorMuted: 'rgba(244,63,94,0.12)',
-  },
-  {
     id: 'total_evidence',
     label: 'Evidence Seized',
     icon: I.evidence,
     color: '#3b82f6',
     colorMuted: 'rgba(59,130,246,0.12)',
-  },
-  {
-    id: 'arrests_made',
-    label: 'Arrests Made',
-    icon: I.tracker,
-    color: '#10b981',
-    colorMuted: 'rgba(16,185,129,0.12)',
   },
 ];
 
@@ -619,6 +556,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [globalSearch, setGlobalSearch] = useState('');
+  const [hoverPriority, setHoverPriority] = useState<string | null>(null);
 
   const handleGlobalSearch = () => {
     const q = globalSearch.trim();
@@ -655,8 +593,22 @@ export default function Dashboard() {
   });
 
   const isLoading = isLoadingStats;
-  const priorityDist = stats?.priority_distribution || [];
-  const trendData = stats?.trend_data || [];
+  const priorityDist = (stats?.priority_distribution || []).map((p: { name: string; value: number }) => ({
+    ...p,
+    label: (p.name || '').charAt(0).toUpperCase() + (p.name || '').slice(1),
+  }));
+  const priorityTotal = priorityDist.reduce((sum: number, p: { value: number }) => sum + Number(p.value || 0), 0);
+  const trendData = (stats?.trend_data || []).map((m: { month: string; cases?: number; closed?: number }) => {
+    const registered = Number(m.cases || 0);
+    const closed = Number(m.closed || 0);
+    return {
+      month: m.month,
+      registered,
+      closed,
+      open: Math.max(0, registered - closed),
+    };
+  });
+  const closedInTrend = trendData.reduce((sum: number, m: { closed: number }) => sum + m.closed, 0);
   const liveStatus = [
     { label: 'Database / API', ok: !!stats },
     ...(toolStatus?.tools || []).map((t) => ({
@@ -773,14 +725,7 @@ export default function Dashboard() {
           if (isLoading) {
             finalValue = '—';
           } else {
-            const apiVal = Number((stats as any)?.[s.id] ?? 0);
-            if (s.id === 'funds_frozen') {
-              if (apiVal >= 1e7) finalValue = `₹ ${(apiVal / 1e7).toFixed(2)} Cr`;
-              else if (apiVal >= 1e5) finalValue = `₹ ${(apiVal / 1e5).toFixed(2)} L`;
-              else finalValue = `₹ ${apiVal.toLocaleString('en-IN')}`;
-            } else {
-              finalValue = apiVal;
-            }
+            finalValue = Number((stats as any)?.[s.id] ?? 0);
           }
           return (
             <StatCard
@@ -831,59 +776,70 @@ export default function Dashboard() {
         {/* Trend chart */}
         <div className="col-12 col-xl-8">
           <div className="card h-100">
-            <div className="card-header">
-              <span className="card-title">{t('dashboard.charts.case_trend', 'Case Volume — 6 Month Trend')}</span>
+            <div className="card-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span className="card-title">FIRs registered — last 6 months</span>
+              <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400, lineHeight: 1.5 }}>
+                Bar height is FIRs created that month. Grey is the share already closed.
+                To close a case: open{' '}
+                <Link to="/cases" style={{ color: '#818cf8', textDecoration: 'none' }}>Cases</Link>
+                , open the FIR, click <strong style={{ color: '#e2e8f0' }}>Edit</strong>, set Status to{' '}
+                <strong style={{ color: '#e2e8f0' }}>Closed</strong>, then save.
+              </span>
             </div>
             <div className="card-body">
-              <ResponsiveContainer width="100%" height={218}>
-                <AreaChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                  <defs>
-                    <linearGradient id="gNew" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gClosed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={trendData}
+                  margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
+                  barCategoryGap="36%"
+                >
+                  <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.14)" />
                   <XAxis
                     dataKey="month"
-                    tick={{ fill: '#475569', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
-                    axisLine={false} tickLine={false}
+                    interval={0}
+                    tickMargin={10}
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Inter, sans-serif', textAnchor: 'middle' }}
+                    axisLine={false}
+                    tickLine={false}
+                    padding={{ left: 12, right: 12 }}
                   />
                   <YAxis
-                    tick={{ fill: '#475569', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
-                    axisLine={false} tickLine={false}
+                    allowDecimals={false}
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Inter, sans-serif' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={28}
                   />
                   <Tooltip
+                    cursor={{ fill: 'rgba(148,163,184,0.08)' }}
                     contentStyle={{
-                      background: 'rgba(10,14,26,0.95)',
-                      border: '1px solid rgba(99,102,241,0.2)',
+                      background: '#1e293b',
+                      border: '1px solid rgba(148,163,184,0.25)',
                       borderRadius: 8,
-                      fontSize: 12,
-                      color: '#cbd5e1',
+                      fontSize: 13,
+                      color: '#f8fafc',
                       fontFamily: 'Inter, sans-serif',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
                     }}
-                    cursor={{ stroke: 'rgba(99,102,241,0.2)', strokeWidth: 1 }}
+                    labelStyle={{ color: '#f8fafc', fontWeight: 600, marginBottom: 4 }}
+                    itemStyle={{ color: '#e2e8f0' }}
+                    formatter={(value: number, name: string) => [value, name]}
                   />
                   <Legend
-                    wrapperStyle={{ fontSize: 11, color: '#64748b', fontFamily: 'JetBrains Mono, monospace' }}
+                    wrapperStyle={{ fontSize: 12, color: '#94a3b8', fontFamily: 'Inter, sans-serif', paddingTop: 12 }}
+                    iconType="square"
+                    iconSize={10}
                   />
-                  <Area
-                    type="monotone" dataKey="cases" name="New"
-                    stroke="#6366f1" strokeWidth={2}
-                    fill="url(#gNew)" dot={false} activeDot={{ r: 4, fill: '#6366f1' }}
-                  />
-                  <Area
-                    type="monotone" dataKey="closed" name="Closed"
-                    stroke="#22d3ee" strokeWidth={2}
-                    fill="url(#gClosed)" dot={false} activeDot={{ r: 4, fill: '#22d3ee' }}
-                  />
-                </AreaChart>
+                  <Bar dataKey="closed" name="Closed" stackId="fir" fill="#64748b" />
+                  <Bar dataKey="open" name="Open" stackId="fir" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
+              {closedInTrend === 0 && trendData.length > 0 && (
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>
+                  No FIR is marked Closed yet, so the grey segment stays empty.{' '}
+                  <Link to="/cases" style={{ color: '#818cf8', textDecoration: 'none' }}>Go to Cases to close one →</Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -891,46 +847,119 @@ export default function Dashboard() {
         {/* Priority Donut */}
         <div className="col-12 col-xl-4">
           <div className="card h-100">
-            <div className="card-header">
-              <span className="card-title">{t('dashboard.charts.priority_dist', 'Priority Distribution')}</span>
+            <div className="card-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span className="card-title">Priority of FIRs on record</span>
+              <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400 }}>
+                Split of current cases by the priority set on each FIR.
+              </span>
             </div>
-            <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="card-body">
               {priorityDist.length === 0 ? (
                 <div className="empty-state" style={{ padding: '24px 16px' }}>
                   <div className="empty-state-icon">{I.cases}</div>
                   <div className="empty-state-text">No case data yet</div>
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={priorityDist}
-                      cx="50%" cy="50%"
-                      innerRadius={54} outerRadius={80}
-                      paddingAngle={2} dataKey="value"
-                    >
-                      {priorityDist.map((entry: any) => (
-                        <Cell key={entry.name} fill={PRIORITY_COLORS[entry.name]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: 'rgba(10,14,26,0.95)',
-                        border: '1px solid rgba(99,102,241,0.2)',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ position: 'relative', width: 160, height: 160, flexShrink: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={priorityDist}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={48}
+                            outerRadius={72}
+                            paddingAngle={1.5}
+                            dataKey="value"
+                            nameKey="label"
+                            stroke="#0f172a"
+                            strokeWidth={2}
+                            onMouseEnter={(_, index) => setHoverPriority(priorityDist[index]?.name || null)}
+                            onMouseLeave={() => setHoverPriority(null)}
+                          >
+                            {priorityDist.map((entry: { name: string }) => (
+                              <Cell
+                                key={entry.name}
+                                fill={PRIORITY_COLORS[entry.name] || '#64748b'}
+                                fillOpacity={!hoverPriority || hoverPriority === entry.name ? 1 : 0.35}
+                                style={{ cursor: 'pointer', outline: 'none' }}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+                      }}>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>{priorityTotal}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>FIRs</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {priorityDist.map((row: { name: string; label: string; value: number }) => {
+                        const pct = priorityTotal ? Math.round((row.value / priorityTotal) * 100) : 0;
+                        const active = hoverPriority === row.name;
+                        return (
+                          <div
+                            key={row.name}
+                            onMouseEnter={() => setHoverPriority(row.name)}
+                            onMouseLeave={() => setHoverPriority(null)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              fontSize: 13,
+                              padding: '4px 8px',
+                              borderRadius: 6,
+                              background: active ? 'rgba(148,163,184,0.12)' : 'transparent',
+                              cursor: 'default',
+                            }}
+                          >
+                            <span style={{
+                              width: 8, height: 8, borderRadius: 99, flexShrink: 0,
+                              background: PRIORITY_COLORS[row.name] || '#64748b',
+                            }} />
+                            <span style={{ color: '#e2e8f0', flex: 1 }}>{row.label}</span>
+                            <span style={{ color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                            <span style={{ color: '#64748b', width: 36, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {hoverPriority && (() => {
+                    const row = priorityDist.find((p: { name: string }) => p.name === hoverPriority);
+                    if (!row) return null;
+                    const pct = priorityTotal ? Math.round((row.value / priorityTotal) * 100) : 0;
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 12px',
                         borderRadius: 8,
-                        fontSize: 12,
-                        color: '#cbd5e1',
-                      }}
-                    />
-                    <Legend
-                      formatter={(v) => (
-                        <span style={{ color: '#64748b', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}>
-                          {v}
+                        background: '#1e293b',
+                        border: `1px solid ${PRIORITY_COLORS[row.name] || '#64748b'}`,
+                        color: '#f8fafc',
+                        fontSize: 13,
+                        fontFamily: 'Inter, sans-serif',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
+                      }}>
+                        <span style={{
+                          width: 8, height: 8, borderRadius: 99, flexShrink: 0,
+                          background: PRIORITY_COLORS[row.name] || '#64748b',
+                        }} />
+                        <span style={{ fontWeight: 600 }}>{row.label}</span>
+                        <span style={{ color: '#cbd5e1' }}>
+                          {row.value} FIR{row.value === 1 ? '' : 's'} · {pct}% of record
                         </span>
-                      )}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
             </div>
           </div>
@@ -1041,9 +1070,7 @@ export default function Dashboard() {
 
 const QUICK_ACTIONS = [
   { icon: I.newcase, label: 'New FIR Entry', desc: 'Open a new investigation', path: '/cases/new' },
-  { icon: I.tracker, label: 'IP / IMEI Tracker', desc: 'OSINT lookup for phone, IP, or domain', path: '/osint' },
-  { icon: I.bank, label: 'Record Fund Freeze', desc: 'Enter frozen amount on the FIR after bank confirmation', path: '/cases' },
-  { icon: I.social, label: 'Social Media Profiler', desc: 'Analyze suspect social footprint', path: '/osint' },
+  { icon: I.tracker, label: 'OSINT lookup', desc: 'Look up a public IP, domain, or username', path: '/osint' },
 ];
 
 function getTimeGreeting() {

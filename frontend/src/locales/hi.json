@@ -6,7 +6,8 @@
     "intel": "खतरा खुफिया",
     "reports": "रिपोर्ट",
     "settings": "सेटिंग्स",
-    "logout": "साइन आउट"
+    "logout": "साइन आउट",
+    "image_authenticity": "छवि प्रमाणिकता"
   },
   "dashboard": {
     "title": "कमांड सेंटर",

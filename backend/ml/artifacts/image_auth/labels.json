@@ -1,0 +1,10 @@
+{
+  "class_names": [
+    "authentic",
+    "manipulated"
+  ],
+  "class_to_idx": {
+    "authentic": 0,
+    "manipulated": 1
+  }
+}

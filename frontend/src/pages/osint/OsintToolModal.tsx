@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { osintApi, CveResult, DomainReputationResult } from '@/api/osint';
 
 export type ToolType = 'cve' | 'domain' | 'ipgeo' | 'nmap' | 'whois' | 'shodan' | 'socmint' | null;
@@ -28,7 +29,7 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
     },
     domain: {
       title: 'Domain Reputation',
-      placeholder: 'Enter domain (e.g. example.com)',
+      placeholder: 'Enter domain (google.com) or public IP (1.1.1.1 — not 127.0.0.1)',
       action: 'Check',
       apiCall: osintApi.checkDomain,
     },
@@ -96,17 +97,29 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
     onClose();
   };
 
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      padding: '20px'
-    }}>
-      <div style={{
+  const modal = (
+    <div
+      onClick={resetAndClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        zIndex: 4000,
+        padding: '72px 20px 32px',
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
         background: '#0f172a', border: '1px solid var(--border-subtle)',
         borderRadius: '12px', width: '100%', maxWidth: '600px',
-        display: 'flex', flexDirection: 'column', maxHeight: '85vh',
+        display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 104px)',
+        margin: '0 auto',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
       }}>
         <div style={{
@@ -472,4 +485,6 @@ export default function OsintToolModal({ isOpen, onClose, toolType }: OsintToolM
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

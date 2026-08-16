@@ -18,10 +18,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.api.v1.router import api_router
 
 # Configure logging
@@ -31,9 +31,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ── Rate limiter (shared across the whole app) ────────────────────────────────
-limiter = Limiter(key_func=get_remote_address)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,6 +38,22 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 CCID Backend API starting up...")
     logger.info(f"   Environment: {settings.environment}")
     logger.info(f"   Supabase URL: {settings.supabase_url or 'NOT SET'}")
+
+    def _warmup_image_auth():
+        try:
+            from ml.image_auth.predict import ensure_loaded
+            ensure_loaded()
+        except Exception as exc:
+            logger.warning("image_auth warmup skipped: %s", exc)
+        try:
+            from ml.image_auth_ai.predict import ensure_loaded as ensure_ai, model_available
+            if model_available():
+                ensure_ai()
+        except Exception as exc:
+            logger.warning("image_auth_ai warmup skipped: %s", exc)
+
+    import threading
+    threading.Thread(target=_warmup_image_auth, daemon=True, name="image-auth-warmup").start()
     yield
     logger.info("🛑 CCID Backend API shutting down...")
 

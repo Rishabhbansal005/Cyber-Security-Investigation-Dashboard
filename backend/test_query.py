@@ -1,8 +1,7 @@
 import os
 import requests
 
-base = os.getenv("SUPABASE_URL", "https://your-project-ref.supabase.co").rstrip("/")
-url = f"{base}/rest/v1/cases?select=*"
+url = "https://nikwmicqzoxmpuwfovve.supabase.co/rest/v1/cases?select=*"
 anon_key = os.getenv("SUPABASE_ANON_KEY", "your_supabase_anon_key")
 
 headers = {

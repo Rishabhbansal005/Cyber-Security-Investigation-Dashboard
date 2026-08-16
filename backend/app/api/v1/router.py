@@ -5,7 +5,7 @@ from app.api.v1.endpoints import (
     browser_analysis, usb_analysis, correlations, enrichment,
     event_log_analysis, contact_submissions, suspects, osint, ai,
     threat_intel, image_forensics, cdr_analysis, financial_analysis, audit,
-    intelligence,
+    intelligence, image_auth,
 )
 from app.services.forensics import VolatilityAdapter, WiresharkAdapter, AutopsyAdapter, FTKAdapter, MobileAdapter, SIEMAdapter
 
@@ -35,6 +35,7 @@ api_router.include_router(cdr_analysis.router)
 api_router.include_router(financial_analysis.router)
 api_router.include_router(audit.router)
 api_router.include_router(intelligence.router)
+api_router.include_router(image_auth.router)
 
 
 @api_router.get("/health", tags=["Health"])

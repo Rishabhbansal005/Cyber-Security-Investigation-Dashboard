@@ -95,6 +95,13 @@ const NAV_ITEMS: NavItem[] = [
       <path d="M10 2v3h3M5 8h6M5 11h4" strokeLinecap="round" />
     </svg>
   ), label: 'Complaint intelligence', section: 'ANALYSIS' },
+  { path: '/image-auth', icon: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <circle cx="6" cy="7" r="1.5" />
+      <path d="M2 11l3.5-2.5L9 11l2-1.5 3 2.5" strokeLinejoin="round" />
+    </svg>
+  ), label: 'Image Authenticity', section: 'ANALYSIS' },
   { path: '/osint',      icon: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <circle cx="8" cy="8" r="6" />
@@ -104,11 +111,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/threat-intelligence', icon: Icons.threat, label: 'Live Threat Intel', section: 'ANALYSIS' },
   { path: '/risk',       icon: Icons.risk,      label: 'Risk Assessment',  section: 'ANALYSIS' },
   { path: '/reports',    icon: Icons.reports,   label: 'Reports',          section: 'OUTPUT' },
-  { path: '/audit',      icon: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  ), label: 'Audit Logs', section: 'SYSTEM' },
 ];
 
 interface SidebarProps {
