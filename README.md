@@ -216,19 +216,129 @@ Sidebar → Contact. Form: name, email, subject, message. Rate-limited. Saved to
 
 ---
 
-## Machine learning (on disk)
+## Machine learning models
 
-| Path | Role |
+All of these are **assistive**. Scores are model confidence, not legal proof. Officers still decide. Complaint models are marked `is_prototype` in the API because they were trained on public-style / synthetic complaint text plus officer corrections, not a national NCRP gold set.
+
+Run training from `backend/` with the venv active (`python -m ml....`).
+
+### 1. Complaint crime-category classifier (`tfidf-lr-v1`)
+
+| | |
 |---|---|
-| `backend/ml/complaint_classifier/` | Train/predict crime category |
-| `backend/ml/priority_model/` | Priority label |
-| `backend/ml/entities/` | Regex/entity extract (UPI, phones, emails, etc.) |
-| `backend/ml/data/` | Synthetic + train CSVs, Hindi-capable generator |
-| `backend/ml/image_auth/` | Face/GAN authenticity train/predict |
-| `backend/ml/image_auth_ai/` | Alternate AI-vs-real trainer (optional Hugging Face download) |
-| `backend/ml/artifacts/` | Saved metrics and `.pt` / sklearn models |
+| **Where officers use it** | **Complaint intelligence** page — paste text or drop a file |
+| **Code** | `backend/ml/complaint_classifier/` |
+| **Artifact** | `backend/ml/artifacts/complaint_classifier.joblib` |
+| **Algorithm** | TF-IDF (unigrams + bigrams, 12k features) + **Logistic Regression** (`class_weight=balanced`) |
+| **Languages** | English and Hindi-style complaint wording in `ml/data/` (train CSV + generator) |
+| **Labels** (`ml/categories.json`) | Financial Fraud, UPI Fraud, Phishing, Job/Employment Scam, Investment Scam, Social Media Scam, Account Takeover, Identity Theft, Online Shopping Scam, Sextortion, Cyberbullying/Harassment, Other |
+| **Output** | Predicted class, probability vector, TF-IDF **indicator tokens** that pushed the class |
+| **Retrain extra** | `ml/data/officer_corrections.csv` from the in-app agree/correct feedback |
 
-Optional: `sentence-transformers` for embeddings; TF-IDF cosine is the fallback.
+**Held-out metrics** (saved in `complaint_classifier_metrics.json`, synthetic/public-style split — high numbers are expected on this data):
+
+- Accuracy **97.6%**, macro F1 **0.96**
+- Strong on Job/Employment Scam, Phishing, Investment Scam; weaker relative F1 on Social Media Scam (~0.84) and Cyberbullying (~0.85)
+
+```bash
+python -m ml.complaint_classifier.train
+```
+
+### 2. Complaint priority model (`xgb-priority-v1`)
+
+| | |
+|---|---|
+| **Where** | Same complaint pipeline — HIGH / MEDIUM / LOW pill |
+| **Code** | `backend/ml/priority_model/` |
+| **Artifact** | `backend/ml/artifacts/priority_model.joblib` |
+| **Algorithm** | **XGBoost** (`n_estimators=80`, `max_depth=4`, `multi:softprob`) |
+| **Features** | Amount lost (INR + log), hours since incident, entity count, has UPI / URL / phone, similar-case count, classifier confidence, evidence count |
+| **How labels were made** | A **documented weighted rule** (`prototype_score`) — amount, recency, identifiers, similar cases, and extra weight for high-harm types (ATO, sextortion, identity theft, financial/UPI fraud). Not police SOP. |
+
+**Held-out metrics** (`priority_model_metrics.json`, 1,200 synthetic feature rows):
+
+- Accuracy **92.1%**, macro F1 **0.88**
+- HIGH recall is the weakest (~0.73) — treat HIGH as a lead, not a charging decision
+
+```bash
+python -m ml.priority_model.train
+```
+
+### 3. Complaint pipeline extras (not neural nets)
+
+These run in `backend/ml/pipeline.py` with the two models above:
+
+- **Entity extraction** (`ml/entities/extract.py`) — regex for Indian mobile, UPI IDs, email, URLs, Instagram/Telegram/WhatsApp handles, ₹ / INR amounts, UTR/TXN IDs, bank account numbers. Values are **masked** in the UI.
+- **Similar cases** (`ml/similarity/embeddings.py`) — cosine nearest neighbours. Uses **all-MiniLM-L6-v2** if `sentence-transformers` is installed; otherwise **TF-IDF cosine**.
+- **Identifier hits** — same phone/UPI/email/URL/txn across other case titles/descriptions.
+- **NCRP draft fields** — suggested category, amount, UPI, phone, URL, txn, email, narrative preview.
+
+API: `POST /api/v1/intelligence/analyze/complaint` (and file / feedback / similar-case routes).
+
+### 4. Image authenticity — StyleGAN / fake-face (`image_auth`)
+
+| | |
+|---|---|
+| **Where** | **Image Authenticity** page (legacy GAN check) |
+| **Code** | `backend/ml/image_auth/` |
+| **Weights** | `backend/ml/artifacts/image_auth/model.pt` |
+| **Architecture** | **EfficientNet-B0**, 224×224, ImageNet norm, JPEG-quality augment, trained with AMP on CUDA |
+| **Task** | `authentic` vs `manipulated` (StyleGAN-style faces) |
+| **Train setup in metrics** | 8 epochs, batch 8, RTX-class GPU |
+
+**Test set in `image_auth/metrics.json` (3,000 images):** accuracy **99.5%**, F1 **0.995**, AUC **~0.9999**. That is a **lab split of GAN vs real faces**, not WhatsApp forwards, morphs, or video deepfakes. The UI says green ≠ genuine for modern AI.
+
+```bash
+python -m ml.image_auth.train
+```
+
+Needs a local ImageFolder dataset (`train/val/test` with `authentic` and `manipulated`). Weights in git are large `.pt` files.
+
+### 5. Image authenticity — AI-generated stills (`image_auth_ai`)
+
+| | |
+|---|---|
+| **Where** | Same page — **compare / AI-vs-real** head (separate from the GAN face model; do not mix class heads) |
+| **Code** | `backend/ml/image_auth_ai/` (`download_subset.py` can pull a public subset) |
+| **Weights** | `backend/ml/artifacts/image_auth_ai/model.pt` |
+| **Architecture** | **EfficientNet-B0**, same 224px recipe |
+| **Task** | `authentic` vs `generated` (diffusion / DALL-E / Midjourney-style stills in the training mix) |
+
+**Test set in `image_auth_ai/metrics.json` (3,000 images):** accuracy **88.8%**, F1 **0.88**, AUC **~0.977**. Generated-class recall ~**80%** — new generators (Flux, ChatGPT Images, etc.) and heavy compression (WhatsApp) will miss. Assistive only.
+
+```bash
+python -m ml.image_auth_ai.train
+```
+
+API: `POST /api/v1/image-auth/analyze` and `/compare`. Missing `.pt` → HTTP 503.
+
+### 6. IOC / domain threat scorer (`cyber_threat_model`)
+
+| | |
+|---|---|
+| **Where** | Threat enrichment path (`backend/app/services/ml_service.py`) |
+| **Train script** | `backend/scripts/generate_and_train_ml.py` |
+| **Artifact** | `backend/app/models/cyber_threat_model.joblib` (optional; **rule fallback** if missing) |
+| **Algorithm** | **Random Forest** on synthetic IOC features: OTX pulse count, domain age, open ports, Shannon entropy, subdomain depth |
+| **Output** | Risk 0–100 and a coarse label (e.g. phishing domain, C2, malware node) |
+
+If the joblib file is absent, entropy + pulse heuristics still return a score.
+
+```bash
+python scripts/generate_and_train_ml.py
+```
+
+### Artifact index
+
+| File | Model |
+|---|---|
+| `ml/artifacts/complaint_classifier.joblib` + `*_metrics.json` | Category LR |
+| `ml/artifacts/priority_model.joblib` + `*_metrics.json` | Priority XGBoost |
+| `ml/artifacts/image_auth/model.pt` + `metrics.json` | GAN face EfficientNet |
+| `ml/artifacts/image_auth_ai/model.pt` + `metrics.json` | AI-still EfficientNet |
+| `app/models/cyber_threat_model.joblib` | IOC Random Forest (optional) |
+
+**Not ML:** Cyber Copilot is an optional **LLM** (`AI_MODE` / Ollama), not one of these classifiers.
 
 ---
 
