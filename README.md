@@ -1,131 +1,178 @@
-# 🔍 Cyber Crime Investigation Dashboard (CCID)
+# CCID — Cyber Crime Intelligence & Detection
 
-A modern, enterprise-grade digital forensics and cybercrime investigation platform designed for investigators to efficiently manage cases, analyze digital evidence, and generate comprehensive intelligence reports.
+A digital forensics and cybercrime investigation platform for officers to run cases, analyse evidence, enrich IOCs, and produce reports from one dashboard.
 
-## 🌟 Project Overview
-
-The Cyber Crime Investigation Dashboard (CCID) streamlines the Digital Forensics and Incident Response (DFIR) workflow. It bridges the gap between raw forensic artifacts and actionable intelligence by providing automated parsers, a multi-source correlation engine, and a unified timeline to reconstruct cyberattacks.
-
-### Core Capabilities
-
-* **Evidence Management**: Secure uploading of forensic artifacts (PCAP, EVTX, SQLite, LNK, memory dumps) directly to cloud storage with built-in chain of custody tracking.
-* **Automated Forensic Analysis**: 
-  * **Network Forensics**: Parses `.pcap` files using Wireshark/tshark to extract conversations, DNS queries, and suspicious indicators.
-  * **Event Log Forensics**: Parses Windows `.evtx` files to extract logon events, PowerShell execution, and security anomalies.
-  * **Browser Forensics**: Parses Chrome/Edge `History` (SQLite) to extract search terms, downloads, and malicious URLs.
-  * **USB Forensics**: Parses `SYSTEM.hive` and `.lnk` files to reconstruct physical drive connection histories.
-* **Correlation Engine**: Automatically cross-references Indicators of Compromise (IOCs) such as IPs, Domains, and Hashes across multiple evidence sources to build Attack Chains and automatically generate high-confidence findings.
-* **Investigation Intelligence**: Visualizes complex attacks using interactive graph networks and chronological timelines.
-* **Automated Reporting**: Generates downloadable, executive-ready PDF reports containing case summaries, risk assessments, and chain-of-custody logs.
+Sign-in is email and password through Supabase. The UI is English/Hindi and uses the CCID brand mark on login, register, and the sidebar.
 
 ---
 
-## 🛠 Tech Stack
+## What it does
 
-| Layer | Technology |
+### Investigation
+- **Cases** — Create and manage FIRs / cases, suspects, and case status (including closing a case).
+- **Evidence** — Upload artefacts to Supabase Storage with hash / chain-of-custody fields.
+- **Parsers** — Network (PCAP / tshark), Windows event logs (EVTX), browser history, USB (registry / LNK), memory dumps, CDR, financial records, and image EXIF/forensics.
+- **Findings & correlation** — Cross-reference IPs, domains, and hashes across evidence; build attack-chain views.
+- **Risk & reports** — Risk assessments and downloadable PDF / PPT case reports.
+
+### Intelligence
+- **Command Center dashboard** — Live case volume, priority mix, Delhi-NCR heatmap, syndicate graph, and cyber news ticker (optional GNews key).
+- **OSINT** — Lookup tools with inline PDF viewing (not forced download).
+- **Live threat intel** — AlienVault OTX, ThreatFox, and URLhaus feeds plus investigate view.
+- **Complaint intelligence** — Classify and triage complaint text (Hindi + English training data).
+- **Image authenticity** — ML assist to flag likely AI-generated vs real photos.
+- **Cyber Copilot** — Optional local or cloud LLM with officer-review and audit logging. Default is `AI_MODE=disabled`.
+
+### Operations
+- **Contact & Support** — In-app tickets saved locally and optionally emailed (SMTP / Gmail App Password).
+- **Auth** — Supabase session; register to request access.
+
+---
+
+## Tech stack
+
+| Layer | Stack |
 |---|---|
-| **Frontend** | React 18, TypeScript, Vite, React Router v6, Vanilla CSS |
-| **Backend** | FastAPI (Python 3.11), Uvicorn, Pydantic |
-| **Forensic Parsers** | `pyshark` (Network), `Evtx` (Event Logs), `python-registry` (USB) |
-| **Database & Auth** | Supabase (PostgreSQL + Authentication + Storage) |
+| Frontend | React 18, TypeScript, Vite, React Router, TanStack Query, Recharts, React Flow, i18next |
+| Backend | FastAPI, Uvicorn, Pydantic, SlowAPI |
+| Forensics / ML | pyshark, python-evtx, python-registry, LnkParse3, OpenCV, scikit-learn, XGBoost |
+| Data & auth | Supabase (PostgreSQL, Auth, Storage) |
+| Optional deploy | Docker Compose + nginx (TLS certs are local-only; not in git) |
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to run the CCID platform locally.
+## Local setup
 
 ### Prerequisites
-* Node.js 18+
-* Python 3.11+
-* Wireshark / `tshark` installed on your host machine (required for network analysis)
-* A [Supabase](https://supabase.com) account and project
+- Node.js 18+
+- Python 3.11+
+- [Wireshark / tshark](https://www.wireshark.org/) on the host (network analysis)
+- A [Supabase](https://supabase.com) project
 
-### 1. Supabase Setup
-1. Create a new Supabase project.
-2. In the Supabase SQL Editor, run all the migration files found in the `supabase/migrations/` directory in numerical order (from `001_` to `014_`).
-3. Create a Storage Bucket named `forensic_uploads` and ensure it is set to "Public" (or configure your RLS policies accordingly).
+### 1. Supabase
+1. Create a project.
+2. In the SQL Editor, run `supabase/migrations/` in order from `001_` through `020_`. You can also run `supabase/combined_migrations.sql` if you prefer one file.
+3. Create a Storage bucket named `forensic_uploads` and set RLS / public access to match your policy.
 
-### 2. Backend Setup
-The FastAPI backend handles all forensic parsing and heavy data processing.
+### 2. Backend
 
 ```bash
 cd backend
-
-# Create and activate a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
+copy .env.example .env   # Windows
+# cp .env.example .env   # macOS/Linux
 ```
 
-**Configure `backend/.env`:**
+Minimum `backend/.env`:
+
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_ANON_KEY=your-anon-key
-SECRET_KEY=your-jwt-secret
+SUPABASE_JWT_SECRET=your-jwt-secret
+SECRET_KEY=change-me-to-a-long-random-string
 CORS_ORIGINS=http://localhost:5173
 ```
 
-**Run the backend:**
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-> *API documentation (Swagger UI) is automatically available at `http://localhost:8000/docs`.*
+Optional (leave blank if unused):
 
-### 3. Frontend Setup
-The Vite + React frontend provides the interactive investigator dashboard.
+```env
+# Contact form email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+NOTIFY_EMAIL=you@gmail.com
+
+# OSINT / news / threat feeds
+ALIENVAULT_OTX_KEY=
+SHODAN_API_KEY=
+GNEWS_API_KEY=
+THREATFOX_AUTH_KEY=
+URLHAUS_AUTH_KEY=
+
+# Copilot — keep disabled until you choose local or approved cloud
+AI_MODE=disabled
+AI_PROVIDER=local
+AI_BASE_URL=http://localhost:11434/v1
+AI_MODEL_NAME=llama3
+CLOUD_APPROVED_FOR_REAL_DATA=false
+```
+
+Never commit `.env` or TLS private keys.
+
+Start the API (from `backend/`):
+
+```bash
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+On Windows, avoid `--reload` if the watcher restarts in a loop. Swagger: `http://127.0.0.1:8000/docs`.
+
+### 3. Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env.local
+copy .env.example .env.local   # Windows
 ```
 
-**Configure `frontend/.env.local`:**
+`frontend/.env.local`:
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-**Run the frontend:**
 ```bash
 npm run dev
 ```
-> *The dashboard will be available at `http://localhost:5173`.*
+
+App: `http://localhost:5173`.
+
+### Docker (optional)
+
+```bash
+docker compose up --build
+```
+
+Place `nginx/server.crt` and `nginx/server.key` locally; they are gitignored.
 
 ---
 
-## 📖 Quick Usage Guide
+## Usage
 
-1. **Create a Case**: Log into the dashboard and click `+ New Case`. Fill out the investigation details.
-2. **Upload Evidence**: Navigate to the case, go to the **Evidence** tab, and upload a raw artifact (e.g., `sample_logon.evtx` or `network_capture.pcap`).
-3. **Analyze**: Click the **Analyze** button next to your uploaded evidence. The FastAPI backend will parse the file in the background and extract timelines and findings.
-4. **Run Correlation Engine**: Go to the **Correlations** tab and click `▶ Run Engine`. The system will map overlapping IOCs across all your analyzed evidence to build an Attack Chain graph.
-5. **Generate Report**: Once the investigation is complete, go to the **Reports** tab and generate an end-to-end PDF report of the case.
+1. Register or sign in at `/login`.
+2. Open **Cases** → create an FIR → upload **Evidence** → **Analyze**.
+3. Use **Correlations** on the case to link IOCs.
+4. Check **OSINT**, **Live Threat Intel**, **Complaint intelligence**, and **Image Authenticity** as needed.
+5. Generate a **Report** from the case when the investigation is ready.
 
----
-
-*Designed and built for Digital Forensics and Incident Response (DFIR) professionals.*
+Close a case from case edit: set status to **Closed** (or use **Close this case** on the case page). Dashboard closed-case counts follow that status.
 
 ---
 
-## 🔒 AI Integration — Data Handling Notes & Compliance
+## AI data handling
 
-The CCID Platform features an integrated **Cyber Copilot** and **AI Threat Intelligence Summarizer** built with strict law-enforcement compliance, chain of custody, and data privacy guardrails:
+- Default: `AI_MODE=disabled` — no model calls.
+- Sensitive / real case text: prefer a local OpenAI-compatible server (`AI_PROVIDER=local`, e.g. Ollama).
+- Cloud on real case data requires `AI_MODE=cloud_approved` and `CLOUD_APPROVED_FOR_REAL_DATA=true`.
+- Copilot answers are drafts until an officer reviews them. Requests are written to `ai_audit_log`.
 
-* **Default-Disabled Posture (`AI_MODE=disabled`)**: Out of the box, AI capabilities are disabled (`AI_MODE=disabled`) to prevent unauthorized data transmission until explicitly configured by system administrators.
-* **Local/Self-Hosted Recommendation for Sensitive Data**: For real, active law-enforcement case evidence (`real_case_data`), a self-hosted local LLM endpoint (such as an internal **Ollama** server running `AI_PROVIDER=local`) is the recommended deployment path to maintain absolute data sovereignty.
-* **Strict Cloud Gating**: Transmission of real case data (`real_case_data`) over cloud AI providers requires explicit written authorization from the department, set via `AI_MODE=cloud_approved` AND `CLOUD_APPROVED_FOR_REAL_DATA=true`. All cloud transmissions trigger high-priority warning logs.
-* **Human-in-the-Loop Officer Verification**: All AI outputs carry a persistent `ai_draft` status (`"AI-Generated Draft — Not Verified. Requires officer review."`). AI outputs cannot be attached to official case files or included in court PDF exports until an authenticated officer explicitly reviews and approves the content (`officer_approved`).
-* **Immutable Audit Trail**: All AI requests, classifications, provider selections, and officer review actions are recorded in an append-only database audit log (`ai_audit_log`) for chain-of-custody compliance.
+---
+
+## Repository layout
+
+```
+backend/app/          FastAPI API, parsers, OSINT, ML, email
+backend/ml/           Complaint classifier and image-auth training/predict
+frontend/src/         Dashboard, cases, evidence, intel, login
+supabase/migrations/  Schema 001–020
+nginx/                Reverse proxy config for Docker
+```
+
+Built for DFIR and cybercrime investigation workflows.
