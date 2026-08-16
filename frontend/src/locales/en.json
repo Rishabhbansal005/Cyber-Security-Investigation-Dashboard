@@ -6,7 +6,8 @@
     "intel": "Threat Intel",
     "reports": "Reports",
     "settings": "Settings",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "image_authenticity": "Image Authenticity"
   },
   "dashboard": {
     "title": "Command Center",

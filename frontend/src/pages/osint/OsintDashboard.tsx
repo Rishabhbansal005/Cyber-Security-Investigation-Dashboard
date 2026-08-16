@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FileDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import StatCard from '@/components/shared/StatCard';
 import { osintApi, OsintFinding, CveResult, DomainReputationResult } from '@/api/osint';
@@ -105,20 +105,28 @@ export default function OsintDashboard() {
   const [dynamicStats, setDynamicStats] = useState(STATS);
   const [activeTool, setActiveTool] = useState<ToolType>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
 
-  const handleExportPDF = async () => {
+  useEffect(() => {
+    return () => {
+      if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
+    };
+  }, [pdfUrl]);
+
+  const closePdfViewer = () => {
+    if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+  };
+
+  const handleViewPDF = async () => {
     setIsExporting(true);
     try {
       const blob = await osintApi.generateReport(findings);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'osint_report.pdf';
-      document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(window.URL.createObjectURL(pdfBlob));
     } catch (e) {
       console.error('Failed to generate report', e);
     } finally {
@@ -145,12 +153,19 @@ export default function OsintDashboard() {
           { ...STATS[2], value: result.findings?.length || 0 },
         ]);
       } else {
-        setSearchError(result.error || 'Failed to retrieve OSINT results.');
+        setSearchError(result.error || 'OTX returned no usable result for this indicator.');
         setFindings([]);
         setDynamicStats([{ ...STATS[0], value: 1 }, { ...STATS[1], value: 0 }, { ...STATS[2], value: 0 }]);
       }
     } catch (err: any) {
-      setSearchError(err.message || 'An error occurred while connecting to the backend API.');
+      const fromApi = err.response?.data?.error || err.response?.data?.detail;
+      const timedOut = err.code === 'ECONNABORTED' || /timeout/i.test(err.message || '');
+      setSearchError(
+        fromApi
+        || (timedOut ? 'The lookup timed out. Try again, or use a quieter IP such as 8.8.8.8.' : null)
+        || err.message
+        || 'Could not reach the OSINT API. Confirm the backend is running on port 8000.'
+      );
       setFindings([]);
       setHasSearched(true);
     } finally {
@@ -286,7 +301,7 @@ export default function OsintDashboard() {
               <span className="card-title">Live Intelligence Feed</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button
-                  onClick={handleExportPDF}
+                  onClick={handleViewPDF}
                   disabled={isExporting}
                   className="btn"
                   style={{
@@ -294,8 +309,8 @@ export default function OsintDashboard() {
                     color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', gap: '6px'
                   }}
                 >
-                  <FileDown size={14} />
-                  {isExporting ? 'Generating...' : 'Export to PDF'}
+                  <Eye size={14} />
+                  {isExporting ? 'Opening...' : 'View PDF'}
                 </button>
                 <span style={{ fontSize: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }} className="blink-anim" />
@@ -397,6 +412,45 @@ export default function OsintDashboard() {
         onClose={() => setActiveTool(null)}
         toolType={activeTool}
       />
+
+      {pdfUrl && (
+        <div
+          onClick={closePdfViewer}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 5000,
+            background: 'rgba(2, 6, 23, 0.82)',
+            display: 'flex', flexDirection: 'column',
+            padding: '24px 32px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
+          >
+            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600 }}>OSINT report</span>
+            <button
+              type="button"
+              onClick={closePdfViewer}
+              className="btn"
+              style={{
+                padding: '6px 14px', fontSize: 13,
+                background: 'rgba(255,255,255,0.08)', color: '#e2e8f0',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}
+            >
+              Close
+            </button>
+          </div>
+          <iframe
+            title="OSINT report"
+            src={pdfUrl}
+            style={{
+              flex: 1, width: '100%', border: 'none', borderRadius: 8,
+              background: '#0f172a',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,6 @@ from app.models.schemas import DashboardStats, Hotspot
 import logging
 import time
 import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -97,16 +96,15 @@ async def get_dashboard_stats(
             "suspects": fetch_suspects,
             "activity": fetch_activity,
         }
+        # Sequential: 8 parallel PostgREST HTTP/2 streams were getting
+        # ConnectionTerminated / Cloudflare 400 and the UI showed all zeros.
         results: Dict[str, Any] = {}
-        with ThreadPoolExecutor(max_workers=8) as pool:
-            futures = {pool.submit(fn): name for name, fn in jobs.items()}
-            for fut in as_completed(futures):
-                name = futures[fut]
-                try:
-                    results[name] = fut.result()
-                except Exception as exc:
-                    logger.warning("Dashboard query %s failed: %s", name, exc)
-                    results[name] = None
+        for name, fn in jobs.items():
+            try:
+                results[name] = fn()
+            except Exception as exc:
+                logger.warning("Dashboard query %s failed: %s", name, exc)
+                results[name] = None
 
         cases = (results["cases"].data if results.get("cases") else None) or []
         total_cases = len(cases)
@@ -209,7 +207,8 @@ async def get_dashboard_stats(
             trend_data=trend_data,
             broadcast_alert=broadcast_alert,
         )
-        dashboard_cache.set("stats", stats)
+        if results.get("cases") is not None:
+            dashboard_cache.set("stats", stats)
         return stats
 
     except Exception as e:

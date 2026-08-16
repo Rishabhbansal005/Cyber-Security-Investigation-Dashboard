@@ -25,6 +25,21 @@ class ImageParser:
     @staticmethod
     def parse_image(file_path: str, original_file_name: str) -> Dict[str, Any]:
         """Parse Image files for EXIF data (GPS, timestamps, etc)."""
+        try:
+            with open(file_path, "rb") as f:
+                return ImageParser.parse_stream(f, original_file_name)
+        except Exception as e:
+            logger.error(f"Error parsing Image file {file_path}: {e}")
+            return {
+                "exif_data": {},
+                "gps_coordinates": None,
+                "timeline_events": [],
+                "analysis_summary": {"has_exif": False, "has_gps": False},
+            }
+
+    @staticmethod
+    def parse_stream(stream, original_file_name: str) -> Dict[str, Any]:
+        """Parse Image files for EXIF data (GPS, timestamps, etc)."""
         results = {
             "exif_data": {},
             "gps_coordinates": None,
@@ -36,8 +51,7 @@ class ImageParser:
         }
         
         try:
-            with open(file_path, 'rb') as f:
-                tags = exifread.process_file(f, details=False)
+            tags = exifread.process_file(stream, details=False)
                 
             if not tags:
                 return results
@@ -85,6 +99,6 @@ class ImageParser:
                     pass
 
         except Exception as e:
-            logger.error(f"Error parsing Image file {file_path}: {e}")
+            logger.error(f"Error parsing Image stream {original_file_name}: {e}")
             
         return results

@@ -9,13 +9,11 @@ interface ChatMessage {
   status?: 'success' | 'blocked' | 'failed' | 'disabled';
   review_status?: 'ai_draft' | 'officer_approved';
   audit_log_id?: string;
-  data_classification?: 'synthetic' | 'real_case_data';
 }
 
 export const CyberCopilotChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [classification, setClassification] = useState<'synthetic' | 'real_case_data'>('synthetic');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -49,7 +47,6 @@ export const CyberCopilotChat: React.FC = () => {
       sender: 'user',
       text: userText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      data_classification: classification
     };
 
     const currentHistory = messages
@@ -65,7 +62,7 @@ export const CyberCopilotChat: React.FC = () => {
     try {
       const res: AIResponse = await aiApi.askCopilot({
         question: userText,
-        data_classification: classification,
+        data_classification: 'synthetic',
         history: currentHistory
       });
 
@@ -132,15 +129,6 @@ export const CyberCopilotChat: React.FC = () => {
               </div>
             </div>
             <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer' }}>✕</button>
-          </div>
-
-          {/* Classification Selector */}
-          <div style={{ padding: '8px 14px', background: '#1e293b', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-            <span style={{ color: '#94a3b8' }}>Data Mode:</span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button type="button" onClick={() => setClassification('synthetic')} style={{ padding: '3px 8px', borderRadius: '4px', border: 'none', fontSize: '11px', fontWeight: 500, cursor: 'pointer', background: classification === 'synthetic' ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: classification === 'synthetic' ? '#fff' : '#94a3b8' }}>Synthetic Data</button>
-              <button type="button" onClick={() => setClassification('real_case_data')} style={{ padding: '3px 8px', borderRadius: '4px', border: 'none', fontSize: '11px', fontWeight: 500, cursor: 'pointer', background: classification === 'real_case_data' ? '#ef4444' : 'rgba(255,255,255,0.05)', color: classification === 'real_case_data' ? '#fff' : '#94a3b8' }}>Real Case Data 🔒</button>
-            </div>
           </div>
 
           {/* Messages */}

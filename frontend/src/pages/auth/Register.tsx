@@ -15,12 +15,6 @@ const EyeIcon = ({ open }: { open: boolean }) => open ? (
   </svg>
 );
 
-const ShieldIcon = () => (
-  <svg viewBox="0 0 20 20" fill="white" width="22" height="22">
-    <path d="M10 1L3 4v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V4L10 1zM10 2.2L17 5v5c0 3.8-2.6 6.7-6 7.7l-1-.3C7.3 16 5 13.3 5 10V5l5-2.8z"/>
-  </svg>
-);
-
 export default function Register() {
   const { signUp, session } = useAuth();
   const navigate = useNavigate();
@@ -92,13 +86,11 @@ export default function Register() {
       <div className="auth-card animate-in">
         {/* Logo */}
         <div className="auth-logo">
-          <div className="auth-logo-icon"><ShieldIcon /></div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-heading)', letterSpacing: '0.04em' }}>CCID</div>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>
-              Request Access
-            </div>
-          </div>
+          <img
+            src="/ccid-logo.png"
+            alt="CCID — Cyber Crime Intelligence & Detection"
+            className="auth-logo-img"
+          />
         </div>
 
         <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: 'var(--text-heading)' }}>Create Account</h1>

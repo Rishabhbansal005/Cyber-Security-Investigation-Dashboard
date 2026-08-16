@@ -159,7 +159,7 @@ async def generate_pdf_report(request: ReportRequest):
     buffer.seek(0)
     
     return StreamingResponse(buffer, media_type="application/pdf", headers={
-        "Content-Disposition": "attachment; filename=osint_report.pdf"
+        "Content-Disposition": "inline; filename=osint_report.pdf"
     })
 
 @router.get("/whois")

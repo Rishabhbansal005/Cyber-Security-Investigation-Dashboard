@@ -1,0 +1,103 @@
+{
+  "trained_at": "2026-08-14T16:22:28.044133+00:00",
+  "data_dir": "C:\\Users\\asus_pc\\datasets\\image_auth_subset",
+  "model": "efficientnet_b0",
+  "epochs": 8,
+  "batch_size": 8,
+  "device": "cuda",
+  "class_to_idx": {
+    "authentic": 0,
+    "manipulated": 1
+  },
+  "val_best_auc": 0.9998537777777778,
+  "test": {
+    "auc": 0.9998675555555556,
+    "accuracy": 0.9946666666666667,
+    "f1": 0.9946808510638298,
+    "confusion_matrix": [
+      [
+        1488,
+        12
+      ],
+      [
+        4,
+        1496
+      ]
+    ],
+    "report": "              precision    recall  f1-score   support\n\n   authentic     0.9973    0.9920    0.9947      1500\n manipulated     0.9920    0.9973    0.9947      1500\n\n    accuracy                         0.9947      3000\n   macro avg     0.9947    0.9947    0.9947      3000\nweighted avg     0.9947    0.9947    0.9947      3000\n"
+  },
+  "high_concern_threshold": 0.5,
+  "high_concern_test": {
+    "precision": 0.9920424403183024,
+    "recall": 0.9973333333333333,
+    "f1": 0.9946808510638298
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.34523430562764407,
+      "val_auc": 0.9962904444444444,
+      "val_acc": 0.9656666666666667,
+      "val_f1": 0.9649540660088466,
+      "seconds": 169.2
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.19370912259817125,
+      "val_auc": 0.9985475555555556,
+      "val_acc": 0.9836666666666667,
+      "val_f1": 0.9836612204068023,
+      "seconds": 233.4
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.11182393746078015,
+      "val_auc": 0.9987266666666665,
+      "val_acc": 0.976,
+      "val_f1": 0.9764397905759162,
+      "seconds": 188.1
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0824955431073904,
+      "val_auc": 0.9992811111111111,
+      "val_acc": 0.9866666666666667,
+      "val_f1": 0.9867724867724867,
+      "seconds": 258.3
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.04770317347347736,
+      "val_auc": 0.9996755555555555,
+      "val_acc": 0.977,
+      "val_f1": 0.9775024453863711,
+      "seconds": 166.2
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.030491734877228737,
+      "val_auc": 0.9997906666666667,
+      "val_acc": 0.988,
+      "val_f1": 0.9881266490765171,
+      "seconds": 232.8
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.01954642915725708,
+      "val_auc": 0.9998279999999999,
+      "val_acc": 0.9936666666666667,
+      "val_f1": 0.9936898040518101,
+      "seconds": 324.6
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.01268026852607727,
+      "val_auc": 0.9998537777777778,
+      "val_acc": 0.995,
+      "val_f1": 0.9950149551345963,
+      "seconds": 157.9
+    }
+  ],
+  "disclaimer": "Screens synthetic/GAN faces (e.g. fake profiles). Not a morph/video-deepfake lab tool. Assistive only.",
+  "medium_threshold": 0.4
+}

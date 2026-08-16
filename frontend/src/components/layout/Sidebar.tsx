@@ -55,11 +55,6 @@ const Icons = {
       <path d="M5.5 8h5M5.5 11h3" strokeLinecap="round" />
     </svg>
   ),
-  shield: (
-    <svg viewBox="0 0 16 16" fill="currentColor" width="18" height="18">
-      <path d="M8 1L2 3.5V8c0 3.5 2.5 6 6 7.5C14 14 16 11.5 16 8V3.5L8 1zM8 2.2l5.5 2v3.8c0 2.8-2 5-5.5 6.3C5 13 3 10.8 3 8V4.2L8 2.2z" />
-    </svg>
-  ),
   chevronLeft: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
       <path d="M10 3L5 8l5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -95,6 +90,13 @@ const NAV_ITEMS: NavItem[] = [
       <path d="M10 2v3h3M5 8h6M5 11h4" strokeLinecap="round" />
     </svg>
   ), label: 'Complaint intelligence', section: 'ANALYSIS' },
+  { path: '/image-auth', icon: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <circle cx="6" cy="7" r="1.5" />
+      <path d="M2 11l3.5-2.5L9 11l2-1.5 3 2.5" strokeLinejoin="round" />
+    </svg>
+  ), label: 'Image Authenticity', section: 'ANALYSIS' },
   { path: '/osint',      icon: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <circle cx="8" cy="8" r="6" />
@@ -104,11 +106,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/threat-intelligence', icon: Icons.threat, label: 'Live Threat Intel', section: 'ANALYSIS' },
   { path: '/risk',       icon: Icons.risk,      label: 'Risk Assessment',  section: 'ANALYSIS' },
   { path: '/reports',    icon: Icons.reports,   label: 'Reports',          section: 'OUTPUT' },
-  { path: '/audit',      icon: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  ), label: 'Audit Logs', section: 'SYSTEM' },
 ];
 
 interface SidebarProps {
@@ -153,30 +150,17 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       {/* Branding */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">{Icons.shield}</div>
-        {!collapsed && (
-          <div className="sidebar-logo-text">
-            <span className="sidebar-logo-title">CCID</span>
-            <span className="sidebar-logo-subtitle">Investigation Platform</span>
-          </div>
-        )}
+        <img
+          src="/ccid-logo.png"
+          alt="CCID"
+          className="sidebar-logo-img"
+        />
         <button
+          type="button"
+          className="sidebar-toggle"
           onClick={onToggle}
-          style={{
-            marginLeft: collapsed ? 'auto' : 'auto',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            padding: '4px',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            transition: 'color 0.15s',
-          }}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? Icons.chevronRight : Icons.chevronLeft}
         </button>
