@@ -117,3 +117,15 @@ npm run dev
 ---
 
 *Designed and built for Digital Forensics and Incident Response (DFIR) professionals.*
+
+---
+
+## 🔒 AI Integration — Data Handling Notes & Compliance
+
+The CCID Platform features an integrated **Cyber Copilot** and **AI Threat Intelligence Summarizer** built with strict law-enforcement compliance, chain of custody, and data privacy guardrails:
+
+* **Default-Disabled Posture (`AI_MODE=disabled`)**: Out of the box, AI capabilities are disabled (`AI_MODE=disabled`) to prevent unauthorized data transmission until explicitly configured by system administrators.
+* **Local/Self-Hosted Recommendation for Sensitive Data**: For real, active law-enforcement case evidence (`real_case_data`), a self-hosted local LLM endpoint (such as an internal **Ollama** server running `AI_PROVIDER=local`) is the recommended deployment path to maintain absolute data sovereignty.
+* **Strict Cloud Gating**: Transmission of real case data (`real_case_data`) over cloud AI providers requires explicit written authorization from the department, set via `AI_MODE=cloud_approved` AND `CLOUD_APPROVED_FOR_REAL_DATA=true`. All cloud transmissions trigger high-priority warning logs.
+* **Human-in-the-Loop Officer Verification**: All AI outputs carry a persistent `ai_draft` status (`"AI-Generated Draft — Not Verified. Requires officer review."`). AI outputs cannot be attached to official case files or included in court PDF exports until an authenticated officer explicitly reviews and approves the content (`officer_approved`).
+* **Immutable Audit Trail**: All AI requests, classifications, provider selections, and officer review actions are recorded in an append-only database audit log (`ai_audit_log`) for chain-of-custody compliance.

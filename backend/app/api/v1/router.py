@@ -1,11 +1,13 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     cases, evidence, findings, auth, 
-    timeline, reports, risk, network_analysis, memory_analysis, dashboard,
+    reports, risk, network_analysis, memory_analysis, dashboard,
     browser_analysis, usb_analysis, correlations, enrichment,
-    event_log_analysis, contact_submissions, suspects, osint
+    event_log_analysis, contact_submissions, suspects, osint, ai,
+    threat_intel, image_forensics, cdr_analysis, financial_analysis, audit,
+    intelligence, image_auth,
 )
-from app.services.forensics import VolatilityAdapter, WiresharkAdapter, AutopsyAdapter, FTKAdapter
+from app.services.forensics import VolatilityAdapter, WiresharkAdapter, AutopsyAdapter, FTKAdapter, MobileAdapter, SIEMAdapter
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -13,7 +15,6 @@ api_router.include_router(auth.router)
 api_router.include_router(cases.router)
 api_router.include_router(evidence.router)
 api_router.include_router(findings.router)
-api_router.include_router(timeline.router)
 api_router.include_router(reports.router)
 api_router.include_router(risk.router)
 api_router.include_router(network_analysis.router)
@@ -27,6 +28,14 @@ api_router.include_router(event_log_analysis.router)
 api_router.include_router(contact_submissions.router)
 api_router.include_router(suspects.router)
 api_router.include_router(osint.router, prefix="/osint", tags=["OSINT"])
+api_router.include_router(ai.router)
+api_router.include_router(threat_intel.router, prefix="/threat-intel", tags=["Threat Intelligence"])
+api_router.include_router(image_forensics.router)
+api_router.include_router(cdr_analysis.router)
+api_router.include_router(financial_analysis.router)
+api_router.include_router(audit.router)
+api_router.include_router(intelligence.router)
+api_router.include_router(image_auth.router)
 
 
 @api_router.get("/health", tags=["Health"])
@@ -47,6 +56,8 @@ async def list_forensic_tools():
         WiresharkAdapter().get_status(),
         AutopsyAdapter().get_status(),
         FTKAdapter().get_status(),
+        MobileAdapter().get_status(),
+        SIEMAdapter().get_status(),
     ]
     return {
         "tools": tools,

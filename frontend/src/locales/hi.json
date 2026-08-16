@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "cases": "सक्रिय मामले",
+    "osint": "OSINT उपकरण",
+    "intel": "खतरा खुफिया",
+    "reports": "रिपोर्ट",
+    "settings": "सेटिंग्स",
+    "logout": "साइन आउट",
+    "image_authenticity": "छवि प्रमाणिकता"
+  },
+  "dashboard": {
+    "title": "कमांड सेंटर",
+    "subtitle": "साइबर अपराध जांच संचालन का अवलोकन",
+    "stats": {
+      "Total Cases": "कुल मामले",
+      "Critical Findings": "महत्वपूर्ण निष्कर्ष",
+      "Active Cases": "सक्रिय मामले",
+      "Closed": "बंद मामले",
+      "Evidence Items": "साक्ष्य सामग्री",
+      "Correlations": "सहसंबंध",
+      "Attack Chains": "हमला श्रृंखला"
+    },
+    "charts": {
+      "case_trend": "मामलों की मात्रा — 6 महीने का रुझान",
+      "priority_dist": "प्राथमिकता वितरण"
+    },
+    "recent_cases": {
+      "title": "हाल के मामले",
+      "view_all": "सभी देखें →",
+      "no_cases": "अभी कोई मामला नहीं",
+      "start_by_creating": "अपना पहला जांच मामला बनाकर शुरू करें।",
+      "create_case": "मामला बनाएं"
+    },
+    "quick_actions": {
+      "title": "त्वरित क्रियाएं",
+      "New Case": "नया मामला",
+      "New Case Desc": "नई जांच शुरू करें",
+      "Upload Evidence": "साक्ष्य अपलोड करें",
+      "Upload Evidence Desc": "मामले में फाइलें संलग्न करें",
+      "Generate Report": "रिपोर्ट तैयार करें",
+      "Generate Report Desc": "पीडीएफ जांच रिपोर्ट निर्यात करें"
+    },
+    "system_status": {
+      "title": "सिस्टम स्थिति",
+      "gov_portals": "सरकारी साइबर पोर्टल",
+      "police_locations": "साइबर पुलिस स्थान",
+      "online": "ऑनलाइन",
+      "offline": "ऑफ़लाइन"
+    }
+  }
+}

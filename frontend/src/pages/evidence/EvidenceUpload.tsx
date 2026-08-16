@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import casesApi from '@/api/cases';
 import type { EvidenceType, Case } from '@/types';
 
 const STORAGE_BUCKET = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || 'forensic_uploads';
@@ -60,19 +61,12 @@ export default function EvidenceUpload() {
     tags: '',
   });
 
-  // Load cases directly from Supabase (no backend needed)
-  const { data: cases = [] } = useQuery({
+  // Load cases directly via API (so mock cases and permissions are handled consistently)
+  const { data: casesResponse } = useQuery({
     queryKey: ['cases', 'for-upload'],
-    queryFn: async (): Promise<Case[]> => {
-      const { data, error } = await supabase
-        .from('cases')
-        .select('id, case_number, title')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return (data || []) as Case[];
-    },
+    queryFn: () => casesApi.list({ page_size: 100 }),
   });
+  const cases = casesResponse?.items || [];
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {

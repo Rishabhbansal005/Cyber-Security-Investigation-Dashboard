@@ -26,15 +26,16 @@ import NewCase from '@/pages/cases/NewCase';
 import EvidenceUpload from '@/pages/evidence/EvidenceUpload';
 import EvidenceDetail from '@/pages/evidence/EvidenceDetail';
 
-// OSINT module
+// OSINT & Threat Intel
 import OsintDashboard from '@/pages/osint/OsintDashboard';
+import LiveThreatIntelligence from '@/pages/threat/LiveThreatIntelligence';
+import ThreatInvestigate from '@/pages/threat/ThreatInvestigate';
+
 // Findings module (fully implemented)
 import FindingsList from '@/pages/findings/FindingsList';
 import FindingDetail from '@/pages/findings/FindingDetail';
 import FindingForm from '@/pages/findings/FindingForm';
 
-// Timeline module (fully implemented)
-import Timeline from '@/pages/timeline/Timeline';
 
 // Risk Assessment module
 import RiskList from '@/pages/risk_assessments/RiskList';
@@ -45,6 +46,9 @@ import RiskDetail from '@/pages/risk_assessments/RiskDetail';
 import ReportList from '@/pages/reports/ReportList';
 import ReportWizard from '@/pages/reports/ReportWizard';
 import ReportDetail from '@/pages/reports/ReportDetail';
+
+import ComplaintIntelligence from '@/pages/intelligence/ComplaintIntelligence';
+import ImageAuthenticity from '@/pages/intelligence/ImageAuthenticity';
 
 // React Query client
 const queryClient = new QueryClient({
@@ -83,15 +87,18 @@ function App() {
                 <Route path="/evidence/upload" element={<EvidenceUpload />} />
                 <Route path="/evidence/:id" element={<EvidenceDetail />} />
 
-                {/* OSINT */}
+                {/* OSINT & Threat Intel */}
+                <Route path="/complaint-ai" element={<ComplaintIntelligence />} />
+                <Route path="/image-auth" element={<ImageAuthenticity />} />
                 <Route path="/osint" element={<OsintDashboard />} />
+                <Route path="/threat-intelligence" element={<LiveThreatIntelligence />} />
+                <Route path="/threat-intelligence/investigate" element={<ThreatInvestigate />} />
 
                 {/* Findings */}
                 <Route path="/findings" element={<FindingsList />} />
                 <Route path="/findings/new" element={<FindingForm mode="create" />} />
                 <Route path="/findings/:id" element={<FindingDetail />} />
-                <Route path="/timeline" element={<Timeline />} />
-                
+
                 {/* Risk Assessments */}
                 <Route path="/risk" element={<RiskList />} />
                 <Route path="/risk/new" element={<RiskForm mode="create" />} />

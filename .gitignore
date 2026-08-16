@@ -8,6 +8,18 @@ build/
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!**/.env.example
+# TLS / private keys (never commit)
+*.pem
+*.key
+*.p12
+*.pfx
+nginx/server.crt
+nginx/*.crt
+secrets/
+credentials.json
 venv/
 .venv/
 *.log
@@ -24,3 +36,11 @@ coverage/
 .pytest_cache/
 htmlcov/
 *.pdf
+# ML model binaries
+*.joblib
+*.pkl
+# Large training data files
+backend/data/
+DataSets/
+# Scratch/temp scripts
+scratch/

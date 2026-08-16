@@ -1,11 +1,13 @@
+import os
 from functools import lru_cache
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+ENV_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_PATH,
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -54,8 +56,21 @@ class Settings(BaseSettings):
     # ── Contact Form Rate Limiting ────────────────────────────────────────────
     rate_limit_contact: str = "5/minute"
 
-    # OSINT Integration
+    # OSINT & AI Integration
     alienvault_otx_key: str = ""
+    threatfox_auth_key: str = ""
+    urlhaus_auth_key: str = ""
+    anthropic_api_key: str = ""
+    shodan_api_key: str = ""
+    gnews_api_key: str = ""
+
+    # AI Integration Governance & Safety Settings
+    ai_mode: str = "disabled"  # "disabled" | "local_only" | "cloud_approved"
+    ai_provider: str = "local"  # "local" | "cloud"
+    ai_base_url: str = "http://localhost:11434/v1"
+    ai_api_key: str = ""
+    ai_model_name: str = "llama3"
+    cloud_approved_for_real_data: bool = False
 
 
 @lru_cache()

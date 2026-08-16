@@ -29,6 +29,26 @@ export default function UsbAnalysisView({ evidenceId }: UsbAnalysisViewProps) {
     );
   }
 
+  if (data.analysis_status === 'failed') {
+    return (
+      <div className="card mt-4" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
+        <div className="card-body">
+          <h6 style={{ color: 'var(--danger)', fontSize: 16, fontWeight: 700, margin: '0 0 4px 0' }}>
+            ⚠️ USB Forensics Failed
+          </h6>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+            An error occurred while parsing registry hives or link shortcuts.
+          </p>
+          {data.error_message && (
+            <pre style={{ marginTop: 16, background: '#0f172a', padding: 12, borderRadius: 6, fontSize: 12, color: '#fca5a5', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+              {data.error_message}
+            </pre>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (data.analysis_status === 'analyzing') {
     return (
       <div className="empty-state">

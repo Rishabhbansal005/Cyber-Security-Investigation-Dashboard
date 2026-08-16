@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function CaseReportsTab({ caseId, caseNumber }: { caseId: string, caseNumber: string }) {
   const [showGenerate, setShowGenerate] = useState(false);
+  const [reportFormat, setReportFormat] = useState<'pdf' | 'ppt'>('pdf');
   const [title, setTitle] = useState('');
   const [sections, setSections] = useState({
     include_executive_summary: true,
@@ -43,6 +44,7 @@ export default function CaseReportsTab({ caseId, caseNumber }: { caseId: string,
         case_id: caseId,
         title: title || `Investigation Report - ${caseNumber}`,
         report_type: 'investigation',
+        report_format: reportFormat,
         ...sections
       };
       const res = await apiClient.post('/reports', payload);
@@ -103,6 +105,32 @@ export default function CaseReportsTab({ caseId, caseNumber }: { caseId: string,
             </div>
 
             <div className="mb-4">
+              <label className="form-label">Report Format</label>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="report_format"
+                    checked={reportFormat === 'pdf'}
+                    onChange={() => setReportFormat('pdf')}
+                    style={{ accentColor: 'var(--teal)' }}
+                  />
+                  <span>PDF Document</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="report_format"
+                    checked={reportFormat === 'ppt'}
+                    onChange={() => setReportFormat('ppt')}
+                    style={{ accentColor: 'var(--teal)' }}
+                  />
+                  <span>AI PPT Presentation</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="mb-4">
               <label className="form-label" style={{ marginBottom: 16 }}>Included Sections</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
@@ -132,7 +160,80 @@ export default function CaseReportsTab({ caseId, caseNumber }: { caseId: string,
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button className="btn btn-outline-secondary" onClick={() => setShowGenerate(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
-                {generateMutation.isPending ? 'Initiating Generation...' : 'Generate Report'}
+                {generateMutation.isPending ? 'Initiating Generation...' : (reportFormat === 'ppt' ? 'Generate AI PPT' : 'Generate Report')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const [show65bGenerate, setShow65bGenerate] = useState(false);
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState('');
+  
+  const { data: evidenceList = [], isLoading: isEvidenceLoading } = useQuery({
+    queryKey: ['case_evidence_for_65b', caseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('evidence')
+        .select('*')
+        .eq('case_id', caseId);
+      if (error) throw error;
+      return data;
+    },
+    enabled: show65bGenerate
+  });
+
+  const handleDownload65b = async () => {
+    if (!selectedEvidenceId) return;
+    try {
+      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/reports/65b/${selectedEvidenceId}`, '_blank');
+      setShow65bGenerate(false);
+      setSelectedEvidenceId('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to download 65B Certificate');
+    }
+  };
+
+  if (show65bGenerate) {
+    return (
+      <div className="animate-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-heading)', margin: 0 }}>Generate Section 65B Certificate</h3>
+          <button className="btn btn-outline-secondary" onClick={() => setShow65bGenerate(false)}>Cancel</button>
+        </div>
+
+        <div className="card" style={{ maxWidth: 600 }}>
+          <div className="card-body" style={{ padding: '32px' }}>
+            <h3 style={{ color: 'var(--text-heading)', marginBottom: 24 }}>Certificate Details</h3>
+            
+            <div className="mb-4">
+              <label className="form-label">Select Evidence</label>
+              <select 
+                className="form-select" 
+                value={selectedEvidenceId} 
+                onChange={(e) => setSelectedEvidenceId(e.target.value)}
+                disabled={isEvidenceLoading}
+              >
+                <option value="">-- Select an Evidence Item --</option>
+                {evidenceList.map((ev: any) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.evidence_number} - {ev.original_file_name}
+                  </option>
+                ))}
+              </select>
+              {isEvidenceLoading && <div className="mt-2 text-muted" style={{ fontSize: 12 }}>Loading evidence...</div>}
+              {evidenceList.length === 0 && !isEvidenceLoading && (
+                <div className="mt-2 text-danger" style={{ fontSize: 12 }}>No evidence found for this case. Upload evidence first.</div>
+              )}
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '32px 0 24px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button className="btn btn-outline-secondary" onClick={() => setShow65bGenerate(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleDownload65b} disabled={!selectedEvidenceId}>
+                Download Certificate
               </button>
             </div>
           </div>
@@ -146,11 +247,16 @@ export default function CaseReportsTab({ caseId, caseNumber }: { caseId: string,
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-heading)', margin: 0 }}>Case Reports</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '4px 0 0 0' }}>Generate and view PDF reports</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '4px 0 0 0' }}>Generate and view PDF and PPT reports</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowGenerate(true)}>
-          + Generate Report
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button className="btn btn-outline-primary" onClick={() => setShow65bGenerate(true)}>
+            + Generate 65B Certificate
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowGenerate(true)}>
+            + Generate Report
+          </button>
+        </div>
       </div>
 
       <div className="card">

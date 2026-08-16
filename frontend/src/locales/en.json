@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "cases": "Active Cases",
+    "osint": "OSINT Tools",
+    "intel": "Threat Intel",
+    "reports": "Reports",
+    "settings": "Settings",
+    "logout": "Sign Out",
+    "image_authenticity": "Image Authenticity"
+  },
+  "dashboard": {
+    "title": "Command Center",
+    "subtitle": "Overview of cyber crime investigation operations",
+    "stats": {
+      "Total Cases": "Total Cases",
+      "Critical Findings": "Critical Findings",
+      "Active Cases": "Active Cases",
+      "Closed": "Closed",
+      "Evidence Items": "Evidence Items",
+      "Correlations": "Correlations",
+      "Attack Chains": "Attack Chains"
+    },
+    "charts": {
+      "case_trend": "Case Volume — 6 Month Trend",
+      "priority_dist": "Priority Distribution"
+    },
+    "recent_cases": {
+      "title": "Recent Cases",
+      "view_all": "View all →",
+      "no_cases": "No cases yet",
+      "start_by_creating": "Start by creating your first investigation case.",
+      "create_case": "Create Case"
+    },
+    "quick_actions": {
+      "title": "Quick Actions",
+      "New Case": "New Case",
+      "New Case Desc": "Open a new investigation",
+      "Upload Evidence": "Upload Evidence",
+      "Upload Evidence Desc": "Attach files to a case",
+      "Generate Report": "Generate Report",
+      "Generate Report Desc": "Export a PDF investigation report"
+    },
+    "system_status": {
+      "title": "System Status",
+      "gov_portals": "Govt Cyber Portals",
+      "police_locations": "Cyber Police Locations",
+      "online": "Online",
+      "offline": "Offline"
+    }
+  }
+}

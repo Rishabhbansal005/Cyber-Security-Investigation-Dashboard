@@ -33,7 +33,7 @@ async def analyze_usb_artifacts_task(evidence_id: str, case_id: str, current_use
         evidence = evidence_res.data[0]
         
         original_file_name = evidence.get("original_file_name", "").lower()
-        file_path = evidence.get("storage_path", "mock_system.hive")
+        file_path = evidence.get("storage_path") or ""
         
         parsed_data = {"connected_devices": [], "suspicious_devices": []}
         lnk_data = {"file_transfers": [], "suspicious_transfers": []}

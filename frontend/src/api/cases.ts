@@ -2,14 +2,16 @@ import apiClient from './client';
 import type { Case, CaseCreate, CaseUpdate, CaseListResponse, CaseStats } from '@/types';
 
 export const casesApi = {
-  list: (params?: {
+  list: async (params?: {
     page?: number;
     page_size?: number;
     status?: string;
     priority?: string;
     search?: string;
-  }) =>
-    apiClient.get<CaseListResponse>('/cases', { params }).then((r) => r.data),
+  }) => {
+    const response = await apiClient.get<CaseListResponse>('/cases', { params });
+    return response.data;
+  },
 
   get: (id: string) =>
     apiClient.get<Case>(`/cases/${id}`).then((r) => r.data),

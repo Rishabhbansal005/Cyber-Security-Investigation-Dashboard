@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+﻿import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, ResponsiveContainer, Legend,
 } from 'recharts';
 import { useAuth } from '@/context/AuthContext';
@@ -10,8 +10,13 @@ import StatCard from '@/components/shared/StatCard';
 import { StatusBadge, PriorityBadge } from '@/components/shared/Badges';
 import type { Case } from '@/types';
 import dashboardApi from '@/api/dashboard';
+import DelhiNCRHeatmap from '@/components/dashboard/DelhiNCRHeatmap';
+import TopSyndicateGraph from '@/components/dashboard/TopSyndicateGraph';
+import CyberNewsMarquee from '@/components/dashboard/CyberNewsMarquee';
 import casesApi from '@/api/cases';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { Search, AlertTriangle, MapPin, Activity, Users } from 'lucide-react';
 
 /* ─── Emergency Helplines Data ─────────────────────────────── */
 const HELPLINES = [
@@ -58,9 +63,8 @@ function HelplineMarquee() {
       <div
         style={{
           position: 'relative',       /* establishes stacking context     */
-          width: '100%',
           height: 52,
-          marginBottom: 28,
+          marginBottom: 14,
           flexShrink: 0,
           overflow: 'hidden',         /* HARD clip — nothing escapes       */
           borderRadius: 10,
@@ -91,8 +95,8 @@ function HelplineMarquee() {
           whiteSpace: 'nowrap',
         }}>
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
-            <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z"/>
-            <path d="M10 8v4M10 14h.01" strokeLinecap="round"/>
+            <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
+            <path d="M10 8v4M10 14h.01" strokeLinecap="round" />
           </svg>
           SOS HELPLINES
         </div>
@@ -161,8 +165,8 @@ function HelplineMarquee() {
                 </span>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="10" height="10"
                   style={{ color: '#475569', flexShrink: 0 }}>
-                  <rect x="5" y="5" width="9" height="9" rx="1.5"/>
-                  <path d="M3 11V2h9" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="5" y="5" width="9" height="9" rx="1.5" />
+                  <path d="M3 11V2h9" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             ))}
@@ -173,6 +177,285 @@ function HelplineMarquee() {
   );
 }
 
+const GOV_PORTALS = [
+  { name: 'National Cyber Crime Portal', url: 'https://cybercrime.gov.in/', desc: 'Official portal to report cyber crimes' },
+  { name: 'CERT-In', url: 'https://www.cert-in.org.in/', desc: 'Computer Emergency Response Team' },
+  { name: 'I4C', url: 'https://i4c.mha.gov.in/', desc: 'Indian Cyber Crime Coordination Centre' },
+  { name: 'NCIIPC', url: 'https://nciipc.gov.in/', desc: 'National Critical Information Infrastructure' },
+  { name: 'Cyber Swachhta Kendra', url: 'https://www.cyberswachhtakendra.gov.in/', desc: 'Botnet Cleaning and Malware Analysis' },
+  { name: 'ISEA', url: 'https://isea.gov.in/', desc: 'Information Security Education and Awareness' }
+];
+
+/* ─── Govt Portals Marquee Component ───────────────────────────── */
+function GovPortalsMarquee() {
+  const [paused, setPaused] = useState(false);
+  const items = [...GOV_PORTALS, ...GOV_PORTALS];
+
+  return (
+    <>
+      <style>{`
+        @keyframes gp-scroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .gp-track {
+          animation: gp-scroll 35s linear infinite;
+        }
+        .gp-track.gp-paused {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: 52,
+          marginBottom: 14,
+          flexShrink: 0,
+          overflow: 'hidden',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'linear-gradient(90deg,rgba(12,18,32,0.98),rgba(8,13,22,0.98))',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
+          display: 'flex',
+        }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        <div style={{
+          position: 'relative',
+          zIndex: 3,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 18px',
+          background: 'rgba(99,102,241,0.12)',
+          borderRight: '1px solid rgba(99,102,241,0.2)',
+          color: '#818cf8',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          fontFamily: 'JetBrains Mono,monospace',
+          whiteSpace: 'nowrap',
+        }}>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
+            <path d="M10 2l6 4v8l-6 4-6-4V6z" />
+          </svg>
+          GOVT CYBER PORTALS
+        </div>
+        <div style={{
+          flex: 1,
+          position: 'relative',
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
+          WebkitMaskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
+        }}>
+          <div
+            className={`gp-track${paused ? ' gp-paused' : ''}`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              paddingLeft: 16,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {items.map((p, i) => (
+              <a
+                key={i}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={p.desc}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '4px 12px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 7,
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  outline: 'none',
+                  flexShrink: 0,
+                  lineHeight: 1,
+                  transition: 'background 0.15s,border-color 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99,102,241,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(99,102,241,0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+                }}
+              >
+                <span style={{ fontSize: 13.5, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: '#c7d2fe' }}>
+                  {p.name}
+                </span>
+                <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'Inter,sans-serif' }}>
+                  {p.desc}
+                </span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="10" height="10"
+                  style={{ color: '#6366f1', flexShrink: 0 }}>
+                  <path d="M5 11L11 5M11 5H6M11 5V10" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const CYBER_POLICE_LOCATIONS = [
+  { name: 'IFSO Special Cell (Delhi)', address: 'Sector 16C, Dwarka, New Delhi' },
+  { name: 'Cyber Police Station (New Delhi Dist)', address: 'Parliament Street, New Delhi' },
+  { name: 'Cyber Police Station (South Dist)', address: 'Hauz Khas, New Delhi' },
+  { name: 'Cyber Police Station (Rohini Dist)', address: 'Sector 22, Rohini, New Delhi' },
+  { name: 'Cyber Police Station (North East Dist)', address: 'Seelampur, New Delhi' },
+  { name: 'Cyber Crime Station (Gurugram)', address: 'Sector 43, Gurugram, Haryana' },
+  { name: 'Cyber Crime Station (Noida)', address: 'Sector 36, Noida, UP' },
+  { name: 'Cyber Crime Station (Ghaziabad)', address: 'Kavi Nagar, Ghaziabad, UP' },
+  { name: 'Cyber Crime Cell (Faridabad)', address: 'Sector 21C, Faridabad, Haryana' },
+  { name: 'I4C / National Cybercrime Reporting', address: 'cybercrime.gov.in' },
+];
+
+/* ─── Police Locations Marquee Component ───────────────────────────── */
+function PoliceLocationsMarquee() {
+  const [paused, setPaused] = useState(false);
+  const items = [...CYBER_POLICE_LOCATIONS, ...CYBER_POLICE_LOCATIONS];
+
+  return (
+    <>
+      <style>{`
+        @keyframes cp-scroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .cp-track {
+          animation: cp-scroll 45s linear infinite;
+        }
+        .cp-track.cp-paused {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: 52,
+          marginBottom: 28,
+          flexShrink: 0,
+          overflow: 'hidden',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'linear-gradient(90deg,rgba(12,18,32,0.98),rgba(8,13,22,0.98))',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
+          display: 'flex',
+        }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        <div style={{
+          position: 'relative',
+          zIndex: 3,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 18px',
+          background: 'rgba(34,211,238,0.12)',
+          borderRight: '1px solid rgba(34,211,238,0.2)',
+          color: '#22d3ee',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          fontFamily: 'JetBrains Mono,monospace',
+          whiteSpace: 'nowrap',
+        }}>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
+            <path d="M10 2l1.6 4.9H17l-4.4 3.2 1.7 5.1L10 12l-4.3 3.2 1.7-5.1L3 6.9h5.4L10 2z" />
+          </svg>
+          CYBER POLICE HQ
+        </div>
+        <div style={{
+          flex: 1,
+          position: 'relative',
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
+          WebkitMaskImage: 'linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)',
+        }}>
+          <div
+            className={`cp-track${paused ? ' cp-paused' : ''}`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              paddingLeft: 16,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {items.map((loc, i) => (
+              <a
+                key={i}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.name + ', ' + loc.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`${loc.name} - ${loc.address}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '4px 12px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 7,
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  outline: 'none',
+                  flexShrink: 0,
+                  lineHeight: 1,
+                  transition: 'background 0.15s,border-color 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(34,211,238,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(34,211,238,0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: '#c7d2fe' }}>
+                    {loc.name}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'Inter,sans-serif' }}>
+                    📍 {loc.address}
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 const PRIORITY_COLORS: Record<string, string> = {
   critical: '#f43f5e',
@@ -188,12 +471,6 @@ const I = {
       <path d="M3 5h14v13H3z" strokeLinejoin="round" />
       <path d="M7 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
       <path d="M7 10h6M7 14h4" strokeLinecap="round" />
-    </svg>
-  ),
-  critical: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M10 2L2 17h16L10 2z" strokeLinejoin="round" />
-      <path d="M10 8v5M10 15h.01" strokeLinecap="round" />
     </svg>
   ),
   active: (
@@ -214,26 +491,6 @@ const I = {
       <path d="M13 13l4 4" strokeLinecap="round" />
     </svg>
   ),
-  correlation: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <circle cx="5" cy="5" r="2.5" />
-      <circle cx="15" cy="5" r="2.5" />
-      <circle cx="10" cy="15" r="2.5" />
-      <path d="M7 6L8.5 12.5M13 6L11.5 12.5M7.5 5.5h5" />
-    </svg>
-  ),
-  attack: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M10 2l2 7h7l-5.5 4 2 7L10 16l-5.5 4 2-7L1 9h7z" strokeLinejoin="round" />
-    </svg>
-  ),
-  report: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-      <path d="M4 2h9l4 4v13H4V2z" strokeLinejoin="round" />
-      <path d="M13 2v4h4" />
-      <path d="M7 10h6M7 14h4" strokeLinecap="round" />
-    </svg>
-  ),
   newcase: (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <path d="M3 5h14v13H3z" strokeLinejoin="round" />
@@ -241,41 +498,23 @@ const I = {
       <path d="M10 9v6M7 12h6" strokeLinecap="round" />
     </svg>
   ),
-  upload: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-      <path d="M4 14v3h12v-3" />
-      <path d="M10 3v10M7 6l3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  generate: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-      <path d="M4 2h9l4 4v12H4V2z" strokeLinejoin="round" />
-      <path d="M13 2v4h4" />
-      <path d="M7 10h6M7 14h4" strokeLinecap="round" />
-    </svg>
-  ),
   plus: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
       <path d="M8 3v10M3 8h10" strokeLinecap="round" />
     </svg>
   ),
+  suspects: <Users size={18} strokeWidth={2.5} />,
+  tracker: <Search size={18} strokeWidth={2.5} />,
 };
 
 /* ─── Stat card configs ─────────────────────────────────────── */
 const STAT_CARDS = [
   {
     id: 'total_cases',
-    label: 'Total Cases',
+    label: 'Total FIRs',
     icon: I.cases,
     color: '#6366f1',
     colorMuted: 'rgba(99,102,241,0.12)',
-  },
-  {
-    id: 'critical_findings',
-    label: 'Critical Findings',
-    icon: I.critical,
-    color: '#f43f5e',
-    colorMuted: 'rgba(244,63,94,0.12)',
   },
   {
     id: 'active_cases',
@@ -286,7 +525,7 @@ const STAT_CARDS = [
   },
   {
     id: 'closed_cases',
-    label: 'Closed',
+    label: 'Closed Cases',
     icon: I.closed,
     color: '#22d3ee',
     colorMuted: 'rgba(34,211,238,0.10)',
@@ -295,47 +534,88 @@ const STAT_CARDS = [
 
 const SEC_STATS = [
   {
-    id: 'total_evidence',
-    label: 'Evidence Items',
-    icon: I.evidence,
-    color: '#6366f1',
-    colorMuted: 'rgba(99,102,241,0.12)',
-  },
-  {
-    id: 'total_correlations',
-    label: 'Correlations',
-    icon: I.correlation,
+    id: 'suspects_tracked',
+    label: 'Suspects Tracked',
+    icon: I.suspects,
     color: '#a78bfa',
     colorMuted: 'rgba(167,139,250,0.12)',
   },
   {
-    id: 'critical_correlations',
-    label: 'Attack Chains',
-    icon: I.attack,
-    color: '#f43f5e',
-    colorMuted: 'rgba(244,63,94,0.12)',
+    id: 'total_evidence',
+    label: 'Evidence Seized',
+    icon: I.evidence,
+    color: '#3b82f6',
+    colorMuted: 'rgba(59,130,246,0.12)',
   },
 ];
 
+// Operational ticker is built from live FIRs and findings
+
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [hoverPriority, setHoverPriority] = useState<string | null>(null);
+
+  const handleGlobalSearch = () => {
+    const q = globalSearch.trim();
+    if (!q) return;
+    // Route to Cases with search pre-filled
+    navigate(`/cases?search=${encodeURIComponent(q)}`);
+    setGlobalSearch('');
+  };
 
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => dashboardApi.getStats(),
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: recentCases = [], isLoading: isLoadingCases } = useQuery({
     queryKey: ['cases', 'recent'],
     queryFn: async () => {
-      const res = await casesApi.list();
+      const res = await casesApi.list({ page: 1, page_size: 5 });
       return res.items.slice(0, 5);
     },
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
   });
 
-  const isLoading = isLoadingStats || isLoadingCases;
-  const priorityDist = stats?.priority_distribution || [];
-  const trendData = stats?.trend_data || [];
+  const { data: toolStatus } = useQuery({
+    queryKey: ['forensic-tools'],
+    queryFn: () => dashboardApi.getForensicTools(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const isLoading = isLoadingStats;
+  const priorityDist = (stats?.priority_distribution || []).map((p: { name: string; value: number }) => ({
+    ...p,
+    label: (p.name || '').charAt(0).toUpperCase() + (p.name || '').slice(1),
+  }));
+  const priorityTotal = priorityDist.reduce((sum: number, p: { value: number }) => sum + Number(p.value || 0), 0);
+  const trendData = (stats?.trend_data || []).map((m: { month: string; cases?: number; closed?: number }) => {
+    const registered = Number(m.cases || 0);
+    const closed = Number(m.closed || 0);
+    return {
+      month: m.month,
+      registered,
+      closed,
+      open: Math.max(0, registered - closed),
+    };
+  });
+  const closedInTrend = trendData.reduce((sum: number, m: { closed: number }) => sum + m.closed, 0);
+  const liveStatus = [
+    { label: 'Database / API', ok: !!stats },
+    ...(toolStatus?.tools || []).map((t) => ({
+      label: t.tool || t.name || 'Tool',
+      ok: !!t.available,
+    })),
+  ];
 
   return (
     <div className="animate-in">
@@ -343,51 +623,152 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <h1 className="page-header-title">
-            {getTimeGreeting()}, {user?.full_name?.split(' ')[0] ?? 'Investigator'}
+            {t('dashboard.title', 'Command Center')} - {user?.full_name?.split(' ')[0] ?? 'Investigator'}
           </h1>
           <p className="page-header-subtitle">
-            {new Date().toLocaleDateString('en-GB', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-            })}
-            {' · '}CCID Investigation Platform
+            {t('dashboard.subtitle', 'Overview of cyber crime investigation operations')}
           </p>
         </div>
         <Link to="/cases/new" className="btn btn-primary">
-          {I.plus} New Case
+          {I.plus} New FIR
         </Link>
       </div>
 
-      {/* ── Emergency Helplines Marquee ──────────────────── */}
-      <HelplineMarquee />
-
-      {/* ── Primary KPI Row ──────────────────────────────── */}
-      <div className="row g-3 mb-3">
-        {STAT_CARDS.map((s) => (
-          <div key={s.id} className="col-12 col-sm-6 col-xl-3">
-            <StatCard
-              icon={s.icon}
-              label={s.label}
-              value={isLoading ? '—' : (stats as any)?.[s.id] ?? 0}
-              color={s.color}
-              colorMuted={s.colorMuted}
-            />
-          </div>
-        ))}
+      {/* ── Global Search Bar ──────────────────────────────── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', background: 'rgba(15,23,42,0.8)',
+          border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, padding: '12px 20px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 0 10px rgba(99,102,241,0.05)',
+        }}>
+          <Search color="#818cf8" size={20} style={{ marginRight: 16 }} />
+          <input
+            type="text"
+            id="global-police-search"
+            placeholder="Global Police Search: Enter Phone Number, UPI ID, Bank A/C, or FIR Number..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleGlobalSearch(); }}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', color: '#f1f5f9',
+              fontSize: '15px', outline: 'none', fontFamily: 'JetBrains Mono, monospace'
+            }}
+          />
+          <button
+            id="btn-global-search-enter"
+            onClick={handleGlobalSearch}
+            style={{
+              fontSize: 10, background: 'rgba(99,102,241,0.2)', color: '#818cf8',
+              padding: '4px 8px', borderRadius: 4, fontWeight: 'bold',
+              border: '1px solid rgba(99,102,241,0.4)', cursor: 'pointer',
+              transition: 'background 0.15s'
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.4)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
+          >
+            ENTER ↵
+          </button>
+        </div>
       </div>
 
-      {/* ── Secondary Stats Row ──────────────────────────── */}
-      <div className="row g-3 mb-4">
-        {SEC_STATS.map((s) => (
-          <div key={s.id} className="col-12 col-sm-6 col-xl-4">
+      {/* ── Urgent Officer Alerts ────────────────────────────── */}
+      <div
+        style={{
+          background: 'linear-gradient(90deg, rgba(225,29,72,0.15) 0%, rgba(159,18,57,0.05) 100%)',
+          borderLeft: '4px solid #e11d48',
+          padding: '12px 16px',
+          borderRadius: '0 8px 8px 0',
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          animation: 'pulse-bg 2s infinite'
+        }}>
+        <style>{`
+          @keyframes pulse-bg {
+            0% { background-color: rgba(225,29,72,0.15); }
+            50% { background-color: rgba(225,29,72,0.25); }
+            100% { background-color: rgba(225,29,72,0.15); }
+          }
+        `}</style>
+        <AlertTriangle color="#f43f5e" size={20} className="animate-pulse" style={{ flexShrink: 0 }} />
+        <div style={{ 
+          color: '#fecdd3', 
+          fontSize: 13, 
+          fontWeight: 500,
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          <span style={{ fontWeight: 700, color: '#f43f5e', marginRight: 8 }}>BROADCAST:</span>
+          {stats?.broadcast_alert || 'No operational alerts. Register FIRs to populate this feed.'}
+        </div>
+      </div>
+
+      {/* ── Marquees ──────────────────── */}
+      <HelplineMarquee />
+      <GovPortalsMarquee />
+      <PoliceLocationsMarquee />
+      <CyberNewsMarquee />
+
+      {/* ── Combined KPI Grid ──────────────────────────────── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '16px',
+        marginBottom: '24px'
+      }}>
+        {[...STAT_CARDS, ...SEC_STATS].map((s) => {
+          let finalValue: string | number = 0;
+          if (isLoading) {
+            finalValue = '—';
+          } else {
+            finalValue = Number((stats as any)?.[s.id] ?? 0);
+          }
+          return (
             <StatCard
+              key={s.id}
               icon={s.icon}
-              label={s.label}
-              value={isLoading ? '—' : (stats as any)?.[s.id] ?? 0}
+              label={t(`dashboard.stats.${s.label}`, s.label)}
+              value={finalValue}
               color={s.color}
               colorMuted={s.colorMuted}
             />
+          );
+        })}
+      </div>
+
+      {/* ── Cyber Intelligence Visualizations Row ─────────────────── */}
+      <div className="row g-3 mb-4">
+        {/* Live Heatmap */}
+        <div className="col-12 col-xl-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MapPin size={16} color="#ef4444" /> Live Cyber Crime Heatmap (Delhi NCR)
+              </span>
+            </div>
+            <div className="card-body" style={{ padding: 0 }}>
+              <DelhiNCRHeatmap />
+            </div>
           </div>
-        ))}
+        </div>
+
+        {/* Link Analysis Network */}
+        <div className="col-12 col-xl-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Activity size={16} color="#8b5cf6" /> Suspect Link Analysis Engine
+              </span>
+            </div>
+            <div className="card-body" style={{ padding: 0 }}>
+              <TopSyndicateGraph />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Charts Row ──────────────────────────────────── */}
@@ -395,59 +776,70 @@ export default function Dashboard() {
         {/* Trend chart */}
         <div className="col-12 col-xl-8">
           <div className="card h-100">
-            <div className="card-header">
-              <span className="card-title">Case Volume — 6 Month Trend</span>
+            <div className="card-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span className="card-title">FIRs registered — last 6 months</span>
+              <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400, lineHeight: 1.5 }}>
+                Bar height is FIRs created that month. Grey is the share already closed.
+                To close a case: open{' '}
+                <Link to="/cases" style={{ color: '#818cf8', textDecoration: 'none' }}>Cases</Link>
+                , open the FIR, click <strong style={{ color: '#e2e8f0' }}>Edit</strong>, set Status to{' '}
+                <strong style={{ color: '#e2e8f0' }}>Closed</strong>, then save.
+              </span>
             </div>
             <div className="card-body">
-              <ResponsiveContainer width="100%" height={218}>
-                <AreaChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                  <defs>
-                    <linearGradient id="gNew" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gClosed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={trendData}
+                  margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
+                  barCategoryGap="36%"
+                >
+                  <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.14)" />
                   <XAxis
                     dataKey="month"
-                    tick={{ fill: '#475569', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
-                    axisLine={false} tickLine={false}
+                    interval={0}
+                    tickMargin={10}
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Inter, sans-serif', textAnchor: 'middle' }}
+                    axisLine={false}
+                    tickLine={false}
+                    padding={{ left: 12, right: 12 }}
                   />
                   <YAxis
-                    tick={{ fill: '#475569', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
-                    axisLine={false} tickLine={false}
+                    allowDecimals={false}
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Inter, sans-serif' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={28}
                   />
                   <Tooltip
+                    cursor={{ fill: 'rgba(148,163,184,0.08)' }}
                     contentStyle={{
-                      background: 'rgba(10,14,26,0.95)',
-                      border: '1px solid rgba(99,102,241,0.2)',
+                      background: '#1e293b',
+                      border: '1px solid rgba(148,163,184,0.25)',
                       borderRadius: 8,
-                      fontSize: 12,
-                      color: '#cbd5e1',
+                      fontSize: 13,
+                      color: '#f8fafc',
                       fontFamily: 'Inter, sans-serif',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
                     }}
-                    cursor={{ stroke: 'rgba(99,102,241,0.2)', strokeWidth: 1 }}
+                    labelStyle={{ color: '#f8fafc', fontWeight: 600, marginBottom: 4 }}
+                    itemStyle={{ color: '#e2e8f0' }}
+                    formatter={(value: number, name: string) => [value, name]}
                   />
                   <Legend
-                    wrapperStyle={{ fontSize: 11, color: '#64748b', fontFamily: 'JetBrains Mono, monospace' }}
+                    wrapperStyle={{ fontSize: 12, color: '#94a3b8', fontFamily: 'Inter, sans-serif', paddingTop: 12 }}
+                    iconType="square"
+                    iconSize={10}
                   />
-                  <Area
-                    type="monotone" dataKey="cases" name="New"
-                    stroke="#6366f1" strokeWidth={2}
-                    fill="url(#gNew)" dot={false} activeDot={{ r: 4, fill: '#6366f1' }}
-                  />
-                  <Area
-                    type="monotone" dataKey="closed" name="Closed"
-                    stroke="#22d3ee" strokeWidth={2}
-                    fill="url(#gClosed)" dot={false} activeDot={{ r: 4, fill: '#22d3ee' }}
-                  />
-                </AreaChart>
+                  <Bar dataKey="closed" name="Closed" stackId="fir" fill="#64748b" />
+                  <Bar dataKey="open" name="Open" stackId="fir" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
+              {closedInTrend === 0 && trendData.length > 0 && (
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>
+                  No FIR is marked Closed yet, so the grey segment stays empty.{' '}
+                  <Link to="/cases" style={{ color: '#818cf8', textDecoration: 'none' }}>Go to Cases to close one →</Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -455,46 +847,119 @@ export default function Dashboard() {
         {/* Priority Donut */}
         <div className="col-12 col-xl-4">
           <div className="card h-100">
-            <div className="card-header">
-              <span className="card-title">Priority Distribution</span>
+            <div className="card-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span className="card-title">Priority of FIRs on record</span>
+              <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400 }}>
+                Split of current cases by the priority set on each FIR.
+              </span>
             </div>
-            <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="card-body">
               {priorityDist.length === 0 ? (
                 <div className="empty-state" style={{ padding: '24px 16px' }}>
                   <div className="empty-state-icon">{I.cases}</div>
                   <div className="empty-state-text">No case data yet</div>
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={priorityDist}
-                      cx="50%" cy="50%"
-                      innerRadius={54} outerRadius={80}
-                      paddingAngle={2} dataKey="value"
-                    >
-                      {priorityDist.map((entry: any) => (
-                        <Cell key={entry.name} fill={PRIORITY_COLORS[entry.name]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: 'rgba(10,14,26,0.95)',
-                        border: '1px solid rgba(99,102,241,0.2)',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ position: 'relative', width: 160, height: 160, flexShrink: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={priorityDist}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={48}
+                            outerRadius={72}
+                            paddingAngle={1.5}
+                            dataKey="value"
+                            nameKey="label"
+                            stroke="#0f172a"
+                            strokeWidth={2}
+                            onMouseEnter={(_, index) => setHoverPriority(priorityDist[index]?.name || null)}
+                            onMouseLeave={() => setHoverPriority(null)}
+                          >
+                            {priorityDist.map((entry: { name: string }) => (
+                              <Cell
+                                key={entry.name}
+                                fill={PRIORITY_COLORS[entry.name] || '#64748b'}
+                                fillOpacity={!hoverPriority || hoverPriority === entry.name ? 1 : 0.35}
+                                style={{ cursor: 'pointer', outline: 'none' }}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+                      }}>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>{priorityTotal}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>FIRs</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {priorityDist.map((row: { name: string; label: string; value: number }) => {
+                        const pct = priorityTotal ? Math.round((row.value / priorityTotal) * 100) : 0;
+                        const active = hoverPriority === row.name;
+                        return (
+                          <div
+                            key={row.name}
+                            onMouseEnter={() => setHoverPriority(row.name)}
+                            onMouseLeave={() => setHoverPriority(null)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              fontSize: 13,
+                              padding: '4px 8px',
+                              borderRadius: 6,
+                              background: active ? 'rgba(148,163,184,0.12)' : 'transparent',
+                              cursor: 'default',
+                            }}
+                          >
+                            <span style={{
+                              width: 8, height: 8, borderRadius: 99, flexShrink: 0,
+                              background: PRIORITY_COLORS[row.name] || '#64748b',
+                            }} />
+                            <span style={{ color: '#e2e8f0', flex: 1 }}>{row.label}</span>
+                            <span style={{ color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                            <span style={{ color: '#64748b', width: 36, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {hoverPriority && (() => {
+                    const row = priorityDist.find((p: { name: string }) => p.name === hoverPriority);
+                    if (!row) return null;
+                    const pct = priorityTotal ? Math.round((row.value / priorityTotal) * 100) : 0;
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 12px',
                         borderRadius: 8,
-                        fontSize: 12,
-                        color: '#cbd5e1',
-                      }}
-                    />
-                    <Legend
-                      formatter={(v) => (
-                        <span style={{ color: '#64748b', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}>
-                          {v}
+                        background: '#1e293b',
+                        border: `1px solid ${PRIORITY_COLORS[row.name] || '#64748b'}`,
+                        color: '#f8fafc',
+                        fontSize: 13,
+                        fontFamily: 'Inter, sans-serif',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
+                      }}>
+                        <span style={{
+                          width: 8, height: 8, borderRadius: 99, flexShrink: 0,
+                          background: PRIORITY_COLORS[row.name] || '#64748b',
+                        }} />
+                        <span style={{ fontWeight: 600 }}>{row.label}</span>
+                        <span style={{ color: '#cbd5e1' }}>
+                          {row.value} FIR{row.value === 1 ? '' : 's'} · {pct}% of record
                         </span>
-                      )}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
             </div>
           </div>
@@ -507,13 +972,13 @@ export default function Dashboard() {
         <div className="col-12 col-xl-8">
           <div className="card">
             <div className="card-header">
-              <span className="card-title">Recent Cases</span>
+              <span className="card-title">{t('dashboard.recent_cases.title', 'Recent Cases')}</span>
               <Link to="/cases" style={{ fontSize: 12, color: '#818cf8', fontFamily: 'monospace' }}>
-                View all →
+                {t('dashboard.recent_cases.view_all', 'View all →')}
               </Link>
             </div>
             <div style={{ padding: '0 4px' }}>
-              {isLoading ? (
+              {isLoadingCases ? (
                 <div style={{ padding: 20 }}>
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="skeleton" style={{ height: 44, marginBottom: 8, borderRadius: 6 }} />
@@ -521,9 +986,9 @@ export default function Dashboard() {
                 </div>
               ) : recentCases.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-state-title">No cases yet</div>
-                  <div className="empty-state-text">Start by creating your first investigation case.</div>
-                  <Link to="/cases/new" className="btn btn-primary">{I.plus} Create Case</Link>
+                  <div className="empty-state-title">{t('dashboard.recent_cases.no_cases', 'No cases yet')}</div>
+                  <div className="empty-state-text">{t('dashboard.recent_cases.start_by_creating', 'Start by creating your first investigation case.')}</div>
+                  <Link to="/cases/new" className="btn btn-primary">{I.plus} {t('dashboard.recent_cases.create_case', 'Create Case')}</Link>
                 </div>
               ) : (
                 <table className="table table-clickable mb-0">
@@ -567,30 +1032,30 @@ export default function Dashboard() {
         <div className="col-12 col-xl-4">
           <div className="card h-100">
             <div className="card-header">
-              <span className="card-title">Quick Actions</span>
+              <span className="card-title">{t('dashboard.quick_actions.title', 'Quick Actions')}</span>
             </div>
             <div className="card-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 22 }}>
                 {QUICK_ACTIONS.map((a) => (
-                  <Link key={a.path} to={a.path} className="quick-action-link">
+                  <Link key={a.label} to={a.path} className="quick-action-link">
                     <span className="quick-action-icon">{a.icon}</span>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{a.label}</div>
-                      <div style={{ fontSize: 11, color: '#475569' }}>{a.desc}</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{t(`dashboard.quick_actions.${a.label}`, a.label)}</div>
+                      <div style={{ fontSize: 11, color: '#475569' }}>{t(`dashboard.quick_actions.${a.label} Desc`, a.desc)}</div>
                     </div>
                   </Link>
                 ))}
               </div>
 
-              <div className="section-heading">System Status</div>
-              {SYS_STATUS.map((s) => (
+              <div className="section-heading">{t('dashboard.system_status.title', 'System Status')}</div>
+              {liveStatus.map((s) => (
                 <div key={s.label} className="sys-status-row">
                   <span style={{ color: '#94a3b8', fontSize: 12.5 }}>{s.label}</span>
                   <span className={`sys-status-dot ${s.ok ? 'ok' : 'off'}`}>
                     <svg viewBox="0 0 8 8" width="6" height="6">
                       <circle cx="4" cy="4" r="3.5" fill="currentColor" />
                     </svg>
-                    {s.ok ? 'Online' : 'Offline'}
+                    {s.ok ? t('dashboard.system_status.online', 'Online') : t('dashboard.system_status.offline', 'Offline')}
                   </span>
                 </div>
               ))}
@@ -598,21 +1063,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
 
 const QUICK_ACTIONS = [
-  { icon: I.newcase, label: 'New Case', desc: 'Open a new investigation', path: '/cases/new' },
-  { icon: I.upload, label: 'Upload Evidence', desc: 'Attach files to a case', path: '/evidence' },
-  { icon: I.generate, label: 'Generate Report', desc: 'Export a PDF investigation report', path: '/reports/new' },
-];
-
-const SYS_STATUS = [
-  { label: 'Database', ok: true },
-  { label: 'Storage', ok: true },
-  { label: 'Volatility', ok: false },
-  { label: 'Wireshark', ok: false },
+  { icon: I.newcase, label: 'New FIR Entry', desc: 'Open a new investigation', path: '/cases/new' },
+  { icon: I.tracker, label: 'OSINT lookup', desc: 'Look up a public IP, domain, or username', path: '/osint' },
 ];
 
 function getTimeGreeting() {

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ccid-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    # This allows the backend container to connect to Supabase running on the host via localhost:54322/54321
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ccid-frontend
+    restart: always
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/server.crt:/etc/nginx/ssl/server.crt:ro
+      - ./nginx/server.key:/etc/nginx/ssl/server.key:ro
+    depends_on:
+      - backend

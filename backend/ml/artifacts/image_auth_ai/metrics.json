@@ -1,0 +1,104 @@
+{
+  "trained_at": "2026-08-15T12:01:04.818219+00:00",
+  "data_dir": "C:\\Users\\asus_pc\\datasets\\image_auth_ai_subset",
+  "model": "efficientnet_b0",
+  "task": "ai_vs_real",
+  "epochs": 8,
+  "batch_size": 8,
+  "device": "cuda",
+  "class_to_idx": {
+    "authentic": 0,
+    "generated": 1
+  },
+  "val_best_auc": 0.983339111111111,
+  "test": {
+    "auc": 0.9765648888888889,
+    "accuracy": 0.888,
+    "f1": 0.8775510204081632,
+    "confusion_matrix": [
+      [
+        1460,
+        40
+      ],
+      [
+        296,
+        1204
+      ]
+    ],
+    "report": "              precision    recall  f1-score   support\n\n   authentic     0.8314    0.9733    0.8968      1500\n   generated     0.9678    0.8027    0.8776      1500\n\n    accuracy                         0.8880      3000\n   macro avg     0.8996    0.8880    0.8872      3000\nweighted avg     0.8996    0.8880    0.8872      3000\n"
+  },
+  "high_concern_threshold": 0.5,
+  "high_concern_test": {
+    "precision": 0.9678456591639871,
+    "recall": 0.8026666666666666,
+    "f1": 0.8775510204081632
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.34535647668043773,
+      "val_auc": 0.9674482222222223,
+      "val_acc": 0.912,
+      "val_f1": 0.9109311740890689,
+      "seconds": 234.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.26198891588052114,
+      "val_auc": 0.9790962222222223,
+      "val_acc": 0.923,
+      "val_f1": 0.9226130653266331,
+      "seconds": 220.3
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.21069921254316964,
+      "val_auc": 0.9681708888888888,
+      "val_acc": 0.909,
+      "val_f1": 0.9111038749592967,
+      "seconds": 224.6
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.15695935960610707,
+      "val_auc": 0.9731768888888889,
+      "val_acc": 0.914,
+      "val_f1": 0.9123641304347826,
+      "seconds": 222.2
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.1189015212615331,
+      "val_auc": 0.9784575555555556,
+      "val_acc": 0.927,
+      "val_f1": 0.9248197734294542,
+      "seconds": 220.8
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.08471460894743602,
+      "val_auc": 0.9747002222222223,
+      "val_acc": 0.9213333333333333,
+      "val_f1": 0.9201623815967523,
+      "seconds": 222.6
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.04877592529455821,
+      "val_auc": 0.983339111111111,
+      "val_acc": 0.934,
+      "val_f1": 0.9326072157930565,
+      "seconds": 270.7
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.04018513949712117,
+      "val_auc": 0.9785273333333333,
+      "val_acc": 0.9266666666666666,
+      "val_f1": 0.9247091033538672,
+      "seconds": 225.5
+    }
+  ],
+  "disclaimer": "Screens still images for traces of common diffusion / DALL-E / Midjourney generators seen in public training data. ChatGPT Images, Flux, and new tools can be missed. WhatsApp compression reduces reliability. Assistive only \u2014 not legal proof.",
+  "medium_threshold": 0.4
+}

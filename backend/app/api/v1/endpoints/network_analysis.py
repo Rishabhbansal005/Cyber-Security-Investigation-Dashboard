@@ -111,9 +111,15 @@ async def run_network_analysis_task(evidence_id: str, case_id: str, download_url
 
     except Exception as e:
         import traceback
-        logger.error(f"[NETWORK] FAILED for evidence {evidence_id}: {type(e).__name__}: {e}")
+        err_msg = str(e)
+        logger.error(f"[NETWORK] FAILED for evidence {evidence_id}: {type(e).__name__}: {err_msg}")
         logger.error(f"[NETWORK] Full traceback:\n{traceback.format_exc()}")
-        db.table("network_analysis_results").update({"analysis_status": "failed"}).eq("evidence_id", evidence_id).execute()
+        db.table("network_analysis_results").update({
+            "analysis_status": "failed",
+            "error_message": err_msg,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("evidence_id", evidence_id).execute()
+        db.table("evidence").update({"processing_status": "error"}).eq("id", evidence_id).execute()
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)

@@ -6,14 +6,13 @@ import evidenceApi from '@/api/evidence';
 import { StatusBadge, PriorityBadge } from '@/components/shared/Badges';
 import { format } from 'date-fns';
 import type { CaseStatus, CasePriority } from '@/types';
-import CaseTimeline from './CaseTimeline';
 import CaseFindings from './CaseFindings';
 import CaseRiskTab from './tabs/CaseRiskTab';
 import CaseReportsTab from './tabs/CaseReportsTab';
 import CaseCorrelationsTab from './tabs/CaseCorrelationsTab';
 import CaseSuspectsTab from './tabs/CaseSuspectsTab';
 
-type ActiveTab = 'overview' | 'evidence' | 'suspects' | 'findings' | 'correlations' | 'timeline' | 'risk' | 'reports';
+type ActiveTab = 'overview' | 'evidence' | 'suspects' | 'findings' | 'correlations' | 'risk' | 'reports';
 
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>();
@@ -91,7 +90,6 @@ export default function CaseDetail() {
     { key: 'suspects',     label: 'Suspects' },
     { key: 'findings',     label: 'Findings',     count: stats?.findings_count },
     { key: 'correlations', label: 'Correlations' },
-    { key: 'timeline',     label: 'Timeline',     count: stats?.timeline_events },
     { key: 'risk',         label: 'Risk' },
     { key: 'reports',      label: 'Reports' },
   ];
@@ -141,7 +139,6 @@ export default function CaseDetail() {
             { label: 'Evidence',  value: stats.evidence_count,   color: '#6366f1' },
             { label: 'Findings',  value: stats.findings_count,   color: '#f59e0b' },
             { label: 'Critical',  value: stats.critical_findings, color: '#f43f5e' },
-            { label: 'Events',    value: stats.timeline_events,   color: '#a78bfa' },
           ].map((s) => (
             <div key={s.label} className="col-6 col-xl-3">
               <div className="stat-card" style={{ ['--stat-color' as string]: s.color, ['--stat-color-muted' as string]: `${s.color}18` }}>
@@ -187,10 +184,19 @@ export default function CaseDetail() {
                         value={editForm.status}
                         onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as CaseStatus }))}
                       >
-                        {['open','active','pending_review','closed','archived'].map((s) => (
-                          <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                        {[
+                          { value: 'open', label: 'Open' },
+                          { value: 'active', label: 'Active' },
+                          { value: 'pending_review', label: 'Pending review' },
+                          { value: 'closed', label: 'Closed' },
+                          { value: 'archived', label: 'Archived' },
+                        ].map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
                         ))}
                       </select>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
+                        To close this FIR, choose <strong style={{ color: '#e2e8f0' }}>Closed</strong> here, then save.
+                      </div>
                     </div>
                     <div className="col-6">
                       <label className="form-label">Priority</label>
@@ -200,7 +206,7 @@ export default function CaseDetail() {
                         onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value as CasePriority }))}
                       >
                         {['low','medium','high','critical'].map((p) => (
-                          <option key={p} value={p}>{p}</option>
+                          <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                         ))}
                       </select>
                     </div>
@@ -223,6 +229,15 @@ export default function CaseDetail() {
                       {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button className="btn btn-outline-secondary" onClick={() => setEditing(false)}>Cancel</button>
+                    {editForm.status !== 'closed' && (
+                      <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => updateMutation.mutate({ ...editForm, status: 'closed' })}
+                        disabled={updateMutation.isPending}
+                      >
+                        Close this case
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -254,6 +269,12 @@ export default function CaseDetail() {
                       </h6>
                       {[
                         { label: 'Case Number', value: c.case_number, mono: true },
+                        { label: 'FIR Number', value: c.fir_number ?? '—' },
+                        { label: 'NCRP / 1930 ID', value: c.ncrp_complaint_id ?? '—' },
+                        { label: 'Police Station', value: c.police_station ?? '—' },
+                        { label: 'Complainant', value: c.complainant_name ?? '—' },
+                        { label: 'Sections', value: (c.sections_of_law && c.sections_of_law.length) ? c.sections_of_law.join(', ') : '—' },
+                        { label: 'Funds Frozen (INR)', value: c.funds_frozen_inr ? `₹ ${Number(c.funds_frozen_inr).toLocaleString('en-IN')}` : '—' },
                         { label: 'Status', value: <StatusBadge status={c.status} /> },
                         { label: 'Priority', value: <PriorityBadge priority={c.priority} /> },
                         { label: 'Category', value: c.category?.replace('_', ' ') ?? '—' },
@@ -360,11 +381,6 @@ export default function CaseDetail() {
           {/* Suspects Tab */}
           {activeTab === 'suspects' && (
             <CaseSuspectsTab caseId={id!} />
-          )}
-
-          {/* Timeline Tab */}
-          {activeTab === 'timeline' && (
-            <CaseTimeline caseId={id!} />
           )}
 
           {/* Findings Tab */}

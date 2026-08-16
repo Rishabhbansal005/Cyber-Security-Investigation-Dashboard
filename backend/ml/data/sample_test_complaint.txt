@@ -1,0 +1,12 @@
+NATIONAL CYBER CRIME REPORTING PORTAL — SAMPLE COMPLAINT (FICTIONAL / FOR TESTING ONLY)
+Do not treat names, numbers, or IDs in this file as real persons.
+
+Complaint ID (test): NCRP-TEST-2026-0813-0042
+Date of report: 13 August 2026, 16:40 hrs
+Police station (test): Cyber Police Station, Dwarka, New Delhi
+
+NARRATIVE:
+On 11 August 2026 I received a WhatsApp call from 9876543210 claiming to be SBI customer care.
+On 12 August 2026 a Google Pay collect request from refund.helpdesk@ybl led to a debit of Rs 48500 after I entered my UPI PIN.
+UTR: AXISP240812193344. Link sent: https://sbi-kyc-update-secure.net/verify-login
+They blocked me on WhatsApp. Request tracing of the UPI and mobile number.

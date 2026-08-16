@@ -1,0 +1,38 @@
+{
+  "macro_f1": 0.883617764749076,
+  "classification_report": {
+    "HIGH": {
+      "precision": 0.8421052631578947,
+      "recall": 0.7272727272727273,
+      "f1-score": 0.7804878048780488,
+      "support": 22.0
+    },
+    "LOW": {
+      "precision": 0.9753086419753086,
+      "recall": 0.9080459770114943,
+      "f1-score": 0.9404761904761905,
+      "support": 87.0
+    },
+    "MEDIUM": {
+      "precision": 0.9,
+      "recall": 0.9618320610687023,
+      "f1-score": 0.9298892988929889,
+      "support": 131.0
+    },
+    "accuracy": 0.9208333333333333,
+    "macro avg": {
+      "precision": 0.905804635044401,
+      "recall": 0.8657169217843079,
+      "f1-score": 0.883617764749076,
+      "support": 240.0
+    },
+    "weighted avg": {
+      "precision": 0.9219923651721896,
+      "recall": 0.9208333333333333,
+      "f1-score": 0.9200319101405299,
+      "support": 240.0
+    }
+  },
+  "prototype": true,
+  "label_source": "Documented weighted rules in ml.priority_model.predict.prototype_score"
+}

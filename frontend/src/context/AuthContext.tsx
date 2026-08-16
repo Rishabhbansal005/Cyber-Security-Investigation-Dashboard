@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 import type { User } from '@/types';
 
+// ─── Context Type ────────────────────────────────────────────────────────────
 interface AuthContextValue {
   session: Session | null;
   supabaseUser: SupabaseUser | null;
@@ -20,92 +20,120 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  // loading = true only until we know whether a session exists or not
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async (supabaseUserId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', supabaseUserId)
-        .maybeSingle();  // maybeSingle() returns null instead of error when no row found
-
-      if (data && !error) {
-        setUser(data as User);
-      }
-    } catch (e) {
-      // Non-fatal: users table may not exist yet or profile row not created
-      console.warn('[CCID] Could not load user profile (non-fatal):', e);
-    }
-  };
-
-  const refreshUser = async () => {
-    if (supabaseUser) {
-      await fetchUserProfile(supabaseUser.id);
-    }
-  };
+  // Guard: only run Supabase listener once
+  const listenerRegistered = useRef(false);
 
   useEffect(() => {
-    // STEP 1: Get initial session — setLoading(false) as soon as we know the auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setSupabaseUser(session?.user ?? null);
-      setLoading(false); // Auth state is resolved — stop showing spinner
+    if (listenerRegistered.current) return;
+    listenerRegistered.current = true;
 
-      // Profile fetch is best-effort and doesn't block rendering
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      }
-    }).catch(() => {
-      // Even on error, stop the loading spinner
-      setLoading(false);
-    });
+    // Attempt to use real Supabase session if configured
+    const tryRealAuth = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { session: realSession } } = await supabase.auth.getSession();
 
-    // STEP 2: Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setSupabaseUser(session?.user ?? null);
-
-        if (session?.user) {
-          fetchUserProfile(session.user.id);
-        } else {
-          setUser(null);
+        if (realSession) {
+          setSession(realSession);
+          setSupabaseUser(realSession.user);
+          // Try to fetch profile from DB
+          try {
+            const { data } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', realSession.user.id)
+              .maybeSingle();
+            if (data) setUser(data as User);
+          } catch {
+            // Non-fatal
+          }
         }
-      }
-    );
 
-    return () => subscription.unsubscribe();
+        // Listen for real auth changes (sign in / sign out)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+          if (s) {
+            setSession(s);
+            setSupabaseUser(s.user);
+          } else {
+            setSession(null);
+            setSupabaseUser(null);
+            setUser(null);
+          }
+        });
+
+        setLoading(false);
+        return () => subscription.unsubscribe();
+      } catch {
+        setLoading(false);
+      }
+    };
+
+    tryRealAuth();
   }, []);
 
+  const refreshUser = async () => {
+    if (!supabaseUser) return;
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .maybeSingle();
+      if (data) setUser(data as User);
+    } catch {
+      console.warn('[CCID] Could not refresh user profile');
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    if (data.session) {
+      setSession(data.session);
+      setSupabaseUser(data.user);
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, role },
+        data: {
+          full_name: fullName,
+          role: role,
+        },
       },
     });
     if (error) throw error;
+    if (data.session) {
+      setSession(data.session);
+      setSupabaseUser(data.user);
+      setUser({ id: data.user!.id, email, full_name: fullName, role, created_at: new Date().toISOString() } as User);
+    } else if (data.user) {
+      // If email confirmation is required, session might be null.
+      setSupabaseUser(data.user);
+      setUser({ id: data.user.id, email, full_name: fullName, role, created_at: new Date().toISOString() } as User);
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      await supabase.auth.signOut();
+    } catch { /* ignore */ }
     setSession(null);
     setSupabaseUser(null);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{ session, supabaseUser, user, loading, signIn, signUp, signOut, refreshUser }}
-    >
+    <AuthContext.Provider value={{ session, supabaseUser, user, loading, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

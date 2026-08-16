@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface NavItem {
   path: string;
@@ -40,14 +41,6 @@ const Icons = {
       <path d="M8 7v3M8 11.5h.01" strokeLinecap="round" />
     </svg>
   ),
-  timeline: (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-      <circle cx="4" cy="4" r="1.5" />
-      <circle cx="4" cy="12" r="1.5" />
-      <circle cx="12" cy="8" r="1.5" />
-      <path d="M5.5 4.5L10.5 7M5.5 11.5L10.5 9" />
-    </svg>
-  ),
   risk: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <path d="M8 1.5L2 14.5h12L8 1.5z" strokeLinejoin="round" />
@@ -60,11 +53,6 @@ const Icons = {
       <path d="M3 1h7l3 3v11H3V1z" />
       <path d="M10 1v3h3" />
       <path d="M5.5 8h5M5.5 11h3" strokeLinecap="round" />
-    </svg>
-  ),
-  shield: (
-    <svg viewBox="0 0 16 16" fill="currentColor" width="18" height="18">
-      <path d="M8 1L2 3.5V8c0 3.5 2.5 6 6 7.5C14 14 16 11.5 16 8V3.5L8 1zM8 2.2l5.5 2v3.8c0 2.8-2 5-5.5 6.3C5 13 3 10.8 3 8V4.2L8 2.2z" />
     </svg>
   ),
   chevronLeft: (
@@ -82,6 +70,13 @@ const Icons = {
       <path d="M6 2H2v12h4M10 5l4 3-4 3M14 8H6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
+  threat: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <circle cx="8" cy="8" r="6" />
+      <circle cx="8" cy="8" r="3" strokeDasharray="1 1" />
+      <path d="M8 1v2M8 13v2M1 8h2M13 8h2" strokeLinecap="round" />
+    </svg>
+  ),
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -89,13 +84,26 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/cases',      icon: Icons.cases,     label: 'Cases',            section: 'INVESTIGATION' },
   { path: '/evidence',   icon: Icons.evidence,  label: 'Evidence',         section: 'INVESTIGATION' },
   { path: '/findings',   icon: Icons.findings,  label: 'Findings',         section: 'INVESTIGATION' },
+  { path: '/complaint-ai', icon: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <path d="M3 2h7l3 3v9H3V2z" />
+      <path d="M10 2v3h3M5 8h6M5 11h4" strokeLinecap="round" />
+    </svg>
+  ), label: 'Complaint intelligence', section: 'ANALYSIS' },
+  { path: '/image-auth', icon: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <circle cx="6" cy="7" r="1.5" />
+      <path d="M2 11l3.5-2.5L9 11l2-1.5 3 2.5" strokeLinejoin="round" />
+    </svg>
+  ), label: 'Image Authenticity', section: 'ANALYSIS' },
   { path: '/osint',      icon: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <circle cx="8" cy="8" r="6" />
       <path d="M2 8h12M8 2a9 9 0 013 6 9 9 0 01-3 6 9 9 0 01-3-6 9 9 0 013-6" />
     </svg>
   ), label: 'OSINT', section: 'ANALYSIS' },
-  { path: '/timeline',   icon: Icons.timeline,  label: 'Timeline',         section: 'ANALYSIS' },
+  { path: '/threat-intelligence', icon: Icons.threat, label: 'Live Threat Intel', section: 'ANALYSIS' },
   { path: '/risk',       icon: Icons.risk,      label: 'Risk Assessment',  section: 'ANALYSIS' },
   { path: '/reports',    icon: Icons.reports,   label: 'Reports',          section: 'OUTPUT' },
 ];
@@ -109,6 +117,12 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -136,30 +150,17 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       {/* Branding */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">{Icons.shield}</div>
-        {!collapsed && (
-          <div className="sidebar-logo-text">
-            <span className="sidebar-logo-title">CCID</span>
-            <span className="sidebar-logo-subtitle">Investigation Platform</span>
-          </div>
-        )}
+        <img
+          src="/ccid-logo.png"
+          alt="CCID"
+          className="sidebar-logo-img"
+        />
         <button
+          type="button"
+          className="sidebar-toggle"
           onClick={onToggle}
-          style={{
-            marginLeft: collapsed ? 'auto' : 'auto',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            padding: '4px',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            transition: 'color 0.15s',
-          }}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? Icons.chevronRight : Icons.chevronLeft}
         </button>
@@ -179,10 +180,10 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
                 className={({ isActive }) =>
                   `sidebar-nav-item${isActive ? ' active' : ''}`
                 }
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? t(`nav.${item.label.toLowerCase().replace(' ', '_')}`, item.label) : undefined}
               >
                 <span className="nav-icon-wrap">{item.icon}</span>
-                {!collapsed && <span className="nav-label">{item.label}</span>}
+                {!collapsed && <span className="nav-label">{t(`nav.${item.label.toLowerCase().replace(' ', '_')}`, item.label)}</span>}
                 {!collapsed && item.badge && item.badge > 0 && (
                   <span className="nav-badge">{item.badge}</span>
                 )}
@@ -191,6 +192,52 @@ export default function Sidebar({ collapsed, onToggle, onContactOpen }: SidebarP
           </div>
         ))}
       </nav>
+
+      {/* Language Toggle */}
+      <div style={{ padding: collapsed ? '4px 8px' : '4px 12px', marginBottom: '4px' }}>
+        <button
+          onClick={toggleLanguage}
+          title={collapsed ? 'Change Language' : undefined}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: collapsed ? '8px' : '8px 12px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            background: 'none',
+            border: '1px solid var(--border-subtle, #2a2d3e)',
+            borderRadius: 'var(--radius-sm, 6px)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 500,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.1)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.4)';
+            (e.currentTarget as HTMLElement).style.color = '#34d399';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = 'none';
+            (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-subtle, #2a2d3e)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+          }}
+        >
+          <div style={{
+            fontSize: '10px',
+            fontWeight: 700,
+            padding: '2px 4px',
+            border: '1px solid currentColor',
+            borderRadius: '4px',
+            lineHeight: 1
+          }}>
+            {i18n.language === 'hi' ? 'HI' : 'EN'}
+          </div>
+          {!collapsed && <span>{i18n.language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}</span>}
+        </button>
+      </div>
 
       {/* Contact / Support */}
       <div style={{ padding: collapsed ? '4px 8px' : '4px 12px', marginBottom: '4px' }}>

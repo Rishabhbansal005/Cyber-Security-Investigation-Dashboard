@@ -13,6 +13,12 @@ import BrowserAnalysisView from './BrowserAnalysisView';
 import UsbAnalysisView from './UsbAnalysisView';
 import EventLogAnalysisView from './EventLogAnalysisView';
 import eventLogsApi from '@/api/eventLogs';
+import ImageAnalysisView from './ImageAnalysisView';
+import imageApi from '@/api/image';
+import CdrAnalysisView from './CdrAnalysisView';
+import cdrApi from '@/api/cdr';
+import FinancialAnalysisView from './FinancialAnalysisView';
+import financialApi from '@/api/financial';
 
 export default function EvidenceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +67,10 @@ export default function EvidenceDetail() {
                         ev?.original_file_name.toLowerCase().endsWith('.lnk');
 
   const isEventLogArtifact = ev?.original_file_name.toLowerCase().endsWith('.evtx');
+  
+  const isCdrArtifact = ev?.original_file_name.toLowerCase().endsWith('.csv') && ev?.evidence_type === 'document';
+  
+  const isFinancialArtifact = ev?.original_file_name.toLowerCase().endsWith('.csv') && ev?.evidence_type === 'other';
 
   const handleAnalyzeNetwork = async () => {
     if (!ev) return;
@@ -136,6 +146,54 @@ export default function EvidenceDetail() {
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.detail || 'Failed to start Event Log analysis');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleAnalyzeImage = async () => {
+    if (!ev) return;
+    setAnalyzing(true);
+    setError(null);
+    try {
+      await imageApi.analyze(ev.id);
+      queryClient.invalidateQueries({ queryKey: ['evidence', id] });
+      queryClient.invalidateQueries({ queryKey: ['image-analysis', ev.id] });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Failed to start image analysis');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleAnalyzeCdr = async () => {
+    if (!ev) return;
+    setAnalyzing(true);
+    setError(null);
+    try {
+      await cdrApi.analyze(ev.id);
+      queryClient.invalidateQueries({ queryKey: ['evidence', id] });
+      queryClient.invalidateQueries({ queryKey: ['cdr-analysis', ev.id] });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Failed to start CDR analysis');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleAnalyzeFinancial = async () => {
+    if (!ev) return;
+    setAnalyzing(true);
+    setError(null);
+    try {
+      await financialApi.analyze(ev.id);
+      queryClient.invalidateQueries({ queryKey: ['evidence', id] });
+      queryClient.invalidateQueries({ queryKey: ['financial-analysis', ev.id] });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Failed to start Financial analysis');
     } finally {
       setAnalyzing(false);
     }
@@ -329,6 +387,33 @@ export default function EvidenceDetail() {
                       {analyzing ? 'Analyzing...' : 'Analyze Event Logs'}
                     </button>
                   )}
+                  {isImage && (
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={handleAnalyzeImage}
+                      disabled={analyzing}
+                    >
+                      {analyzing ? 'Analyzing...' : 'Analyze Image'}
+                    </button>
+                  )}
+                  {isCdrArtifact && (
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={handleAnalyzeCdr}
+                      disabled={analyzing}
+                    >
+                      {analyzing ? 'Analyzing...' : 'Analyze CDR'}
+                    </button>
+                  )}
+                  {isFinancialArtifact && (
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={handleAnalyzeFinancial}
+                      disabled={analyzing}
+                    >
+                      {analyzing ? 'Analyzing...' : 'Analyze Financial'}
+                    </button>
+                  )}
                   {!ev.is_verified && (
                     <button 
                       className="btn btn-primary btn-sm" 
@@ -462,6 +547,21 @@ export default function EvidenceDetail() {
       {isEventLogArtifact && (
         <div style={{ marginTop: 24 }}>
           <EventLogAnalysisView evidenceId={ev.id} />
+        </div>
+      )}
+      {isImage && (
+        <div style={{ marginTop: 24 }}>
+          <ImageAnalysisView evidenceId={ev.id} />
+        </div>
+      )}
+      {isCdrArtifact && (
+        <div style={{ marginTop: 24 }}>
+          <CdrAnalysisView evidenceId={ev.id} />
+        </div>
+      )}
+      {isFinancialArtifact && (
+        <div style={{ marginTop: 24 }}>
+          <FinancialAnalysisView evidenceId={ev.id} />
         </div>
       )}
     </div>
